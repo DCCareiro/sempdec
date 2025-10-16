@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Fichas Cadastradas</title>
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      /* Global Reset */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Body Styling */
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #f5f5f5;
+        color: #1a1a1a;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Header Styling */
+      header {
+        background-color: #ffffff;
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+
+      .btn-voltar:hover {
+        color: #0077cc;
+      }
+
+      /* Main Content */
+      main {
+        width: 90%;
+        max-width: 1000px;
+        margin: 1.5rem 0;
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Filter Section */
+      .filter-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .filter-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        width: 100%;
+        max-width: 220px;
+      }
+
+      .filter-group input[type="month"] {
+        border: none;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: none;
+        transition: border-color 0.2s ease;
+      }
+
+      .filter-group input[type="month"]:focus {
+        outline: none;
+      }
+
+      .filter-group button {
+        border: none;
+        border-radius: 0 4px 4px 0;
+        padding: 0;
+        width: 40px;
+        height: 36px;
+        background-color: #0077cc;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .filter-group button:hover:not(:disabled) {
+        background-color: #005f99;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+
+      /* Inputs */
+      input[type="text"] {
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 700px;        
+        transition: border-color 0.2s ease;
+      }
+
+      input[type="text"]:focus {
+        border-color: #0077cc;
+        outline: none;
+      }
+
+      /* Buttons */
+      button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+        background-color: #0077cc;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s ease;
+      }
+
+      button:hover:not(:disabled) {
+        background-color: #005f99;
+      }
+
+      button.admin-btn.active {
+        background-color: #28a745;
+      }
+
+      button.admin-btn.active:hover {
+        background-color: #218838;
+      }
+
+      button.edit-btn {
+        background-color: #0077cc;
+      }
+
+      button.delete-btn {
+        background-color: #dc3545;
+      }
+
+      button.delete-btn:hover {
+        background-color: #c82333;
+      }
+
+      button.refresh-btn:disabled {
+        background-color: #e0e0e0;
+        cursor: not-allowed;
+      }
+
+      /* Card Container */
+      #fichasContainer {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        padding: 1rem 0;
+      }
+
+      /* Card Styling */
+      .ficha-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .ficha-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f0f6ff;
+      }
+
+      .ficha-card div {
+        margin-bottom: 0.5rem;
+      }
+
+      .ficha-card strong {
+        display: inline-block;
+        width: 100px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .ficha-card .actions {
+        display: none;
+        margin-top: 0.5rem;
+      }
+
+      .ficha-card.admin-mode .actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      /* Edit Form Overlay */
+      .edit-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .edit-form {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .edit-form h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      .edit-form label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        display: block;
+      }
+
+      .edit-form input,
+      .edit-form textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .edit-form button {
+        width: 48%;
+        margin-top: 0.5rem;
+        border-radius: 4px;
+      }
+
+      .edit-form button[type="button"] {
+        background-color: #6c757d;
+      }
+
+      .edit-form button[type="button"]:hover {
+        background-color: #5a6268;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        main {
+          width: 95%;
+          padding: 1rem;
+        }
+
+        .filter-container {
+          flex-direction: column;
+        }
+
+        .filter-group,
+        input[type="text"] {
+          max-width: none;
+        }
+
+        .button-group {
+          flex-wrap: wrap;
+        }
+
+        button {
+          width: 36px;
+          height: 36px;
+          font-size: 1.1rem;
+        }
+
+        .filter-group button {
+          height: 34px;
+        }
+
+        #fichasContainer {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 1.25rem;
+        }
+
+        .btn-voltar {
+          font-size: 1rem;
+        }
+
+        .edit-form {
+          padding: 1rem;
+        }
+
+        .ficha-card {
+          padding: 0.75rem;
+        }
+
+        button {
+          width: 32px;
+          height: 32px;
+          font-size: 1rem;
+        }
+
+        .filter-group button {
+          height: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { auth } from '../../js/firebase-config.js';
+      import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = '../../index.html';
+        }
+      });
+    </script>
+    <header>
+      <h1>Ações Executadas</h1>
+    </header>
+    <main>
+      <div class="fichas-section">
+        <div class="filter-container">
+          <div class="filter-group">
+            <input type="month" id="filtroMes" aria-label="Filtrar fichas por mês" />
+            <button onclick="filtrarPorMes()" aria-label="Aplicar filtro por mês">
+              <i class="fas fa-filter"></i>
+            </button>
+          </div>
+          <input
+            type="text"
+            id="buscaInput"
+            placeholder="Buscar ficha..."
+            onkeyup="filtrarTabela()"
+            aria-label="Buscar fichas por texto"
+          />
+          <div class="button-group">
+            <button onclick="gerarPDF()" aria-label="Gerar relatório em PDF">
+              <i class="fas fa-file-pdf"></i>
+            </button>
+            <button class="admin-btn" onclick="toggleAdminMode()" aria-label="Ativar ou desativar modo administrativo">
+              <i class="fas fa-user-shield"></i>
+            </button>
+            <button class="refresh-btn" id="refreshBtn" onclick="atualizarDados()" aria-label="Atualizar dados do Firebase">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+        </div>
+        <div id="fichasContainer"></div>
+      </div>
+      <div class="edit-overlay" id="editOverlay" role="dialog" aria-modal="true" aria-label="Formulário de edição de ficha">
+        <form class="edit-form" id="editForm">
+          <h2>Editar Ficha</h2>
+          <input type="hidden" id="editId" />
+          <label for="editData">Data:</label>
+          <input type="text" id="editData" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" required aria-label="Data da ficha" />
+          <label for="editLocalidade">Localidade:</label>
+          <input type="text" id="editLocalidade" required aria-label="Localidade da ficha" />
+          <label for="editAcao">Ação:</label>
+          <input type="text" id="editAcao" required aria-label="Ação da ficha" />
+          <label for="editResponsavel">Responsável:</label>
+          <input type="text" id="editResponsavel" placeholder="Separar por vírgulas" aria-label="Responsáveis pela ficha, separados por vírgulas" />
+          <label for="editObservacao">Observação:</label>
+          <textarea id="editObservacao" rows="4" aria-label="Observações da ficha"></textarea>
+          <button type="submit" aria-label="Salvar alterações da ficha">Salvar</button>
+          <button type="button" onclick="closeEditForm()" aria-label="Cancelar edição da ficha">Cancelar</button>
+        </form>
+      </div>
+    </main>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+        authDomain: "mtag-1c04d.firebaseapp.com",
+        projectId: "mtag-1c04d",
+        storageBucket: "mtag-1c04d.firebasestorage.app",
+        messagingSenderId: "487741931549",
+        appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      let fichasCache = [];
+      let isAdminMode = false;
+
+      const CACHE_KEY = 'fichas_cache';
+      const CACHE_TIMESTAMP_KEY = 'fichas_cache_timestamp';
+      const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours for regular cache
+      const REFRESH_COOLDOWN = 0 * 60 * 60 * 1000; // 0 hours for refresh button
+      const REFRESH_TIMESTAMP_KEY = 'refresh_timestamp';
+
+      function formatarDataBR(dataISO) {
+        if (!dataISO) return '';
+        const [ano, mes, dia] = dataISO.split("-");
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      function parseDataBR(dataBR) {
+        if (!dataBR) return '';
+        const [dia, mes, ano] = dataBR.split('/');
+        return `${ano}-${mes}-${dia}`;
+      }
+
+      function validateDataBR(dataBR) {
+        const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!regex.test(dataBR)) return false;
+        const [dia, mes, ano] = dataBR.split('/').map(Number);
+        const date = new Date(ano, mes - 1, dia);
+        return date.getDate() === dia && date.getMonth() === mes - 1 && date.getFullYear() === ano;
+      }
+
+      function checkRefreshButtonState() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const lastRefresh = localStorage.getItem(REFRESH_TIMESTAMP_KEY);
+        const now = new Date().getTime();
+
+        if (lastRefresh && (now - parseInt(lastRefresh) < REFRESH_COOLDOWN)) {
+          refreshBtn.disabled = true;
+          refreshBtn.style.backgroundColor = '#e0e0e0';
+        } else {
+          refreshBtn.disabled = false;
+          refreshBtn.style.backgroundColor = '#0077cc';
+        }
+      }
+
+      async function atualizarDados() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn.disabled) return;
+
+        try {
+          localStorage.removeItem(CACHE_KEY);
+          localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+          localStorage.setItem(REFRESH_TIMESTAMP_KEY, new Date().getTime().toString());
+          await carregarFichas();
+          checkRefreshButtonState();
+        } catch (error) {
+          console.error('Erro ao atualizar dados:', error);
+        }
+      }
+
+      async function carregarFichas() {
+        try {
+          const cachedData = localStorage.getItem(CACHE_KEY);
+          const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+          const now = new Date().getTime();
+
+          if (cachedData && cachedTimestamp && (now - cachedTimestamp < CACHE_EXPIRY)) {
+            fichasCache = JSON.parse(cachedData);
+            exibirFichas(fichasCache);
+            checkRefreshButtonState();
+            return;
+          }
+
+          const snapshot = await db.collection('fichas').get();
+          fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          fichasCache.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+          localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
+
+          exibirFichas(fichasCache);
+          checkRefreshButtonState();
+        } catch (error) {
+          console.error('Erro ao carregar fichas:', error);
+        }
+      }
+
+      function exibirFichas(fichas) {
+        const container = document.getElementById('fichasContainer');
+        container.innerHTML = '';
+        fichas.forEach(ficha => {
+          const card = document.createElement('div');
+          card.className = `ficha-card ${isAdminMode ? 'admin-mode' : ''}`;
+          card.innerHTML = `
+            <div><strong>Data:</strong> ${formatarDataBR(ficha.data)}</div>
+            <div><strong>Localidade:</strong> ${ficha.localidade}</div>
+            <div><strong>Ação:</strong> ${ficha.acao}</div>
+            <div><strong>Responsável:</strong> ${(ficha.responsavel || []).join(', ')}</div>
+            <div><strong>Observação:</strong> ${ficha.observacao || '-'}</div>
+            <div class="actions" ${isAdminMode ? '' : 'aria-hidden="true"'}>
+              <button class="edit-btn" onclick="abrirEditForm('${ficha.id}')" aria-label="Editar ficha com ID ${ficha.id}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="delete-btn" onclick="excluirFicha('${ficha.id}')" aria-label="Excluir ficha com ID ${ficha.id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      function toggleAdminMode() {
+        const password = prompt('Digite a senha administrativa:');
+        if (password === '0000') {
+          isAdminMode = !isAdminMode;
+          const adminBtn = document.querySelector('.admin-btn');
+          adminBtn.innerHTML = isAdminMode ? '<i class="fas fa-user-shield"></i>' : '<i class="fas fa-user-shield"></i>';
+          adminBtn.classList.toggle('active', isAdminMode);
+          exibirFichas(fichasCache);
+        } else {
+          alert('Senha incorreta!');
+        }
+      }
+
+      function abrirEditForm(id) {
+        if (!isAdminMode) return;
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return;
+
+        document.getElementById('editId').value = ficha.id;
+        document.getElementById('editData').value = formatarDataBR(ficha.data);
+        document.getElementById('editLocalidade').value = ficha.localidade;
+        document.getElementById('editAcao').value = ficha.acao;
+        document.getElementById('editResponsavel').value = (ficha.responsavel || []).join(', ');
+        document.getElementById('editObservacao').value = ficha.observacao || '';
+        document.getElementById('editOverlay').style.display = 'flex';
+        document.getElementById('editData').focus();
+      }
+
+      function closeEditForm() {
+        document.getElementById('editOverlay').style.display = 'none';
+        document.getElementById('editForm').reset();
+        document.querySelector('.admin-btn').focus();
+      }
+
+      document.getElementById('editForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const dataBR = document.getElementById('editData').value;
+        if (!validateDataBR(dataBR)) {
+          alert('Por favor, insira a data no formato dd/mm/aaaa válido.');
+          return;
+        }
+        const updatedFicha = {
+          data: parseDataBR(dataBR),
+          localidade: document.getElementById('editLocalidade').value,
+          acao: document.getElementById('editAcao').value,
+          responsavel: document.getElementById('editResponsavel').value.split(',').map(r => r.trim()).filter(r => r),
+          observacao: document.getElementById('editObservacao').value || null
+        };
+        try {
+          await db.collection('fichas').doc(id).update(updatedFicha);
+          fichasCache = fichasCache.map(f => f.id === id ? { id, ...updatedFicha } : f);
+          fichasCache.sort((a, b) => new Date(b.data) - new Date(a.data));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().getTime().toString());
+          exibirFichas(fichasCache);
+          closeEditForm();
+        } catch (error) {
+          console.error('Erro ao atualizar ficha:', error);
+        }
+      };
+
+      async function excluirFicha(id) {
+        if (!isAdminMode) return;
+        if (!confirm('Confirma exclusão desta ficha?')) return;
+        try {
+          await db.collection('fichas').doc(id).delete();
+          fichasCache = fichasCache.filter(f => f.id !== id);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().getTime().toString());
+          exibirFichas(fichasCache);
+        } catch (error) {
+          console.error('Erro ao excluir ficha:', error);
+        }
+      }
+
+      function filtrarTabela() {
+        const filtro = document.getElementById('buscaInput').value.toLowerCase();
+        document.querySelectorAll('.ficha-card').forEach(card => {
+          card.style.display = card.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        });
+      }
+
+      function filtrarPorMes() {
+        const valorMes = document.getElementById('filtroMes').value;
+        if (!valorMes) return exibirFichas(fichasCache);
+
+        const [ano, mes] = valorMes.split('-');
+        const filtradas = fichasCache.filter(f => {
+          const [fAno, fMes] = (f.data || '').split('-');
+          return fAno === ano && fMes === mes;
+        });
+        exibirFichas(filtradas);
+      }
+
+      function gerarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Centralizar o título
+        const title = 'Relatório de Ações';
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.setFontSize(16);
+        doc.text(title, pageWidth / 2, 15, { align: 'center' });
+
+        // Gerar a tabela
+        doc.autoTable({
+          startY: 20,
+          head: [['Data', 'Localidade', 'Ação', 'Responsável', 'Observação']],
+          body: Array.from(document.querySelectorAll('.ficha-card')).map(card =>
+            Array.from(card.querySelectorAll('div:not(.actions)')).map(div => div.innerText.replace(/^(Data|Localidade|Ação|Responsável|Observação):\s*/, ''))
+          ),
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [0, 119, 204], textColor: [255, 255, 255] },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { bottom: 20 }, // Espaço para o rodapé
+          didDrawPage: function (data) {
+            // Adicionar rodapé com número da página e data de emissão
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const currentPage = data.pageCount;
+            const emissionDate = new Date().toLocaleDateString('pt-BR');
+            const footerText = `Página ${currentPage} | Emitido em: ${emissionDate}`;
+            doc.setFontSize(8);
+            doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+          }
+        });
+
+        doc.save('relatorio_acoes.pdf');
+      }
+
+      carregarFichas();
+    </script>
+  </body>
+</html>

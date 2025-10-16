@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ação Executada</title>
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+      :root {
+        --cor-primaria: #007bff;
+        --cor-secundaria: #0056b3;
+        --cinza-claro: #f8f9fa;
+        --cinza-escuro: #343a40;
+        --borda: #dee2e6;
+        --sombra: rgba(0, 0, 0, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--cinza-claro);
+        color: var(--cinza-escuro);
+        padding: 20px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      header h1 {
+        font-size: 2rem;
+        color: var(--cor-primaria);
+        font-weight: 600;
+      }
+
+      .form-section {
+        background: #fff;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 24px;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px var(--sombra);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+        display: block;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--borda);
+        border-radius: 6px;
+        font-size: 1rem;
+        background: #fff;
+      }
+
+      input:focus,
+      select:focus,
+      .select2-container--default .select2-selection--multiple:focus {
+        outline: none;
+        border-color: var(--cor-primaria);
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+      }
+
+      .button-row {
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        background: var(--cor-primaria);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      button:hover {
+        background: var(--cor-secundaria);
+      }
+
+      .select2-container--default .select2-selection--multiple {
+        border: 1px solid var(--borda);
+        border-radius: 6px;
+        padding: 6px;
+      }
+
+      .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: var(--cor-primaria);
+        border: none;
+        color: white;
+        padding: 4px 8px;
+        margin-top: 4px;
+      }
+
+      @media (max-width: 600px) {
+        .button-row {
+          flex-direction: column;
+        }
+
+        header h1 {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { auth } from '../../js/firebase-config.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = "../../index.html";
+        }
+      });
+    </script>
+
+    <header><h1>Ação Executada</h1></header>
+
+    <main>
+      <div class="form-section">
+        <div>
+          <label for="data">Data</label>
+          <input type="text" id="data" placeholder="Data da Ação" inputmode="numeric" maxlength="10" required />
+        </div>
+
+        <div>
+          <label for="localidade">Localidade</label>
+          <input type="text" id="localidade" placeholder="Informe a localidade" required />
+        </div>
+
+        <div>
+          <label for="acaoPersonalizada">Ação Realizada</label>
+          <input type="text" id="acaoPersonalizada" placeholder="Descreva a ação realizada" required />
+        </div>
+
+        <div>
+          <label for="responsavel">Responsável</label>
+          <select id="responsavel" multiple="multiple" required style="width: 100%">
+            <option>Bruno</option>
+            <option>Josue</option>
+            <option>Sadrak</option>
+            <option>Elison</option>
+            <option>Nafitalison</option>
+            <option>Silvano</option>
+            <option>Anderson</option>
+            <option>Herik</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="observacao">Observação</label>
+          <input type="text" id="observacao" placeholder="Observação (opcional)" />
+        </div>
+
+        <div class="button-row">
+          <button onclick="adicionarFicha()">Salvar</button>
+          <button onclick="window.location.href='fichareac.html'">Registros</button>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $('#responsavel').select2({
+          placeholder: "Selecione os responsáveis..."
+        });
+      });
+    </script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+        authDomain: "mtag-1c04d.firebaseapp.com",
+        projectId: "mtag-1c04d",
+        storageBucket: "mtag-1c04d.firebasestorage.app",
+        messagingSenderId: "487741931549",
+        appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      function formatarDataParaISO(data) {
+        const partes = data.split('/');
+        if (partes.length !== 3) return '';
+        const [dia, mes, ano] = partes;
+        return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      }
+
+      async function adicionarFicha() {
+        const dataBr = document.getElementById('data').value.trim();
+        const localidade = document.getElementById('localidade').value.trim();
+        const acao = document.getElementById('acaoPersonalizada').value.trim();
+        const responsaveis = Array.from(document.getElementById('responsavel').selectedOptions).map(opt => opt.value);
+        const observacao = document.getElementById('observacao').value.trim();
+
+        if (!dataBr || !localidade || !acao || responsaveis.length === 0) {
+          alert('Preencha todos os campos obrigatórios!');
+          return;
+        }
+
+        const dataIso = formatarDataParaISO(dataBr);
+
+        if (!dataIso) {
+          alert('Data inválida. Use o formato dd/mm/aaaa.');
+          return;
+        }
+
+        try {
+          await db.collection('fichas').add({
+            data: dataIso,
+            localidade,
+            acao,
+            responsavel: responsaveis,
+            observacao,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+
+          alert('Ficha salva com sucesso!');
+
+          document.getElementById('data').value = '';
+          document.getElementById('localidade').value = '';
+          document.getElementById('acaoPersonalizada').value = '';
+          $('#responsavel').val(null).trigger('change');
+          document.getElementById('observacao').value = '';
+        } catch (error) {
+          console.error('Erro ao salvar ficha:', error);
+          alert('Erro ao salvar a ficha. Tente novamente.');
+        }
+      }
+
+      // Máscara para campo de data (dd/mm/aaaa)
+      document.getElementById('data').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 2) value = value.slice(0, 2) + '/' + value.slice(2);
+        if (value.length > 5) value = value.slice(0, 5) + '/' + value.slice(5, 9);
+        e.target.value = value.slice(0, 10);
+      });
+    </script>
+  </body>
+</html>
