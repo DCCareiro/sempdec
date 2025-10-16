@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SEMPDEC</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('assets/logo.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 33%;
+      opacity: 0.3;
+      z-index: -1;
+    }
+
+    @media (max-width: 640px) {
+      body::before {
+        background-size: 80%;
+      }
+    }
+
+    button, a { outline: none; }
+
+    .header-bg {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    }
+
+    .action-button {
+      transition: all 0.2s ease;
+      width: 100%;
+      max-width: 300px;
+      margin: 0.5rem auto;
+      border-width: 2px;
+      border-color: #ea580c;
+    }
+
+    .action-button:hover {
+      transform: translateY(-2px);
+      background: #fb923c !important;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .modal-bg {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .titulo-com-contorno {
+      color: #f97316;
+      text-shadow: 2px 2px 0 #fff;
+    }
+
+    .italico {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 pt-20 pb-16 flex flex-col items-center overflow-y-auto">
+
+  <!-- Firebase Auth -->  
+  <script type="module">
+    import { auth } from './js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+
+  <!-- Header fixo -->
+  <header class="header-bg text-white py-2 w-full fixed top-0 left-0 z-50 shadow">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-3xl font-bold titulo-com-contorno">SEMPDEC</h1>
+      <p class="text-base mt-1 italico">Defesa Civil, Somos Todos nós</p>
+    </div>
+  </header>
+
+  <!-- Conteúdo principal -->
+  <main class="flex-grow flex flex-col justify-center items-center w-full overflow-y-auto">
+    <section class="flex flex-col items-center gap-4 w-full max-w-md px-4">
+      <button class="action-button bg-orange-500 text-black font-bold py-2 px-4 rounded shadow hover:bg-orange-600" onclick="window.location.href='funcao/cadastro/fichacafa.html'">CAFASTRO DE FAMILIAS</button>
+      <button class="action-button bg-orange-500 text-black font-bold py-2 px-4 rounded shadow hover:bg-orange-600" onclick="window.location.href='funcao/relatorio/acaoreac.html'">REGISTRO DE AÇÕES</button>
+      <button class="action-button bg-orange-500 text-black font-bold py-2 px-4 rounded shadow hover:bg-orange-600" onclick="window.location.href='funcao/mural/escalas.html'">ESCALAS</button>   
+      <button class="action-button bg-orange-500 text-black font-bold py-2 px-4 rounded shadow hover:bg-orange-600" onclick="window.location.href='https://pmcareiro.infortread.com.br/contracheque/login'">CONTRACHEQUE</button>
+      <button class="action-button bg-orange-500 text-black font-bold py-2 px-4 rounded shadow hover:bg-orange-600" onclick="window.location.href='https://diariomunicipalaam.org.br/visualizar-publicacao/241210145814496471/EHWSWVZUH'">FERIADOS MUNICIPAL</button>
+    </section>
+  </main>
+
+  <!-- Rodapé fixo -->
+  <footer class="bg-blue-900 text-white text-center py-3 w-full fixed bottom-0 left-0 z-50 shadow-inner flex justify-between items-center px-4">
+    <span class="italico">© 2025 Desenvolvido por Darlan Cardoso | V. 3.28.6</span>
+    <button id="logoutBtn" class="bg-red-600 text-white font-bold py-1 px-3 rounded shadow hover:bg-red-700">
+      SAIR
+    </button>
+  </footer>
+
+<script type="module">
+  import { auth } from './js/firebase-config.js';
+  import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "login.html";
+    } catch (err) {
+      console.error("Erro ao sair:", err);
+    }
+  });
+</script>
+</body>
+</html>

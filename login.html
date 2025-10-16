@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mtag</title>    
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* Impede seleção de texto */
+    }
+
+    body {
+      background: #ff9340;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: #ffffff;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .logo {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 30px;
+      animation: pulse 2s infinite ease-in-out;
+      border-radius: 50%;
+      box-shadow: 0 0 0 6px rgba(0, 123, 255, 0.2);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px #ff6a00);
+      }
+      50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 8px #007bff);
+      }
+    }
+
+    h2 {
+      color: #ff6a00;
+      margin-bottom: 25px;
+      font-weight: 600;
+      font-size: 1.8rem;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #007bff;
+      font-size: 0.9rem;
+    }
+
+    .input-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 40px 12px 14px;
+      border: 2px solid #007bff;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #ff6a00;
+      box-shadow: 0 0 8px rgba(255, 106, 0, 0.3);
+      outline: none;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #007bff;
+      font-size: 1.2rem;
+    }
+
+    button {
+      width: 100%;
+      background: #ff6a00;
+      color: #ffffff;
+      padding: 14px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      margin-bottom: 10px;
+    }
+
+    button:hover:not(:disabled) {
+      background: #e05a00;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .mensagem {
+      margin-bottom: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background-color: #ffe0e0;
+      color: #a00;
+      border: 1px solid #e00;
+      display: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .mensagem.show {
+      display: block;
+      opacity: 1;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid #ffffff;
+      border-top: 3px solid #888;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .register-link {
+      font-size: 0.9rem;
+      color: #007bff;
+      margin-top: 12px;
+      display: block;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 400px) {
+      .login-container {
+        padding: 30px 20px;
+        max-width: 90%;
+      }
+
+      .logo {
+        max-width: 120px;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      button {
+        font-size: 1rem;
+        padding: 12px 0;
+      }
+    }
+  </style>
+
+  <script type="module">
+    import { auth } from './js/firebase-config.js';
+    import {
+      signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    function mostrarMensagem(texto) {
+      const msg = document.getElementById("mensagem");
+      msg.innerText = texto;
+      msg.classList.add("show");
+    }
+
+    window.togglePassword = function () {
+      const passwordInput = document.getElementById('senha');
+      const toggleIcon = document.getElementById('toggle-password');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.innerHTML = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.innerHTML = '👁️';
+      }
+    };
+
+    window.login = async function () {
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const botao = document.querySelector("button[type='submit']");
+      const mensagem = document.getElementById("mensagem");
+      mensagem.classList.remove("show");
+
+      if (!email || !senha) {
+        mostrarMensagem("Por favor, preencha todos os campos.");
+        return;
+      }
+
+      const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (!emailValido) {
+        mostrarMensagem("Digite um email válido.");
+        return;
+      }
+
+      const originalText = botao.innerHTML;
+      botao.disabled = true;
+      botao.innerHTML = `Entrando <span class="spinner"></span>`;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, senha);
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Erro ao logar:", error);
+        switch (error.code) {
+          case "auth/invalid-email":
+            mostrarMensagem("Formato de email inválido.");
+            break;
+          case "auth/user-not-found":
+            mostrarMensagem("Usuário não encontrado.");
+            break;
+          case "auth/wrong-password":
+            mostrarMensagem("Senha incorreta.");
+            break;
+          default:
+            mostrarMensagem("Erro ao fazer login. Tente novamente.");
+        }
+      } finally {
+        botao.disabled = false;
+        botao.innerHTML = originalText;
+      }
+    };
+
+    window.irParaCadastro = function () {
+      window.location.href = "cadastro.html";
+    };
+  </script>
+</head>
+<body>
+  <div class="login-container">
+    <img src="assets/favicon.ico" alt="Logo Mtag" class="logo" width="150" />
+    <h2>Login</h2>
+    <div id="mensagem" class="mensagem"></div>
+    <form onsubmit="login(); return false;">
+      <label for="email">Email:</label>
+      <div class="input-container">
+        <input type="email" id="email" name="email" placeholder="Digite seu email" aria-label="Email" required />
+      </div>
+      <label for="senha">Senha:</label>
+      <div class="input-container">
+        <input type="password" id="senha" name="senha" placeholder="Digite sua senha" aria-label="Senha" required />
+        <span id="toggle-password" class="toggle-password" onclick="togglePassword()">👁️</span>
+      </div>
+      <button type="submit">Entrar</button>
+    </form>
+    <span class="register-link" onclick="irParaCadastro()">Cadastrar-se</span>
+  </div>
+</body>
+</html>

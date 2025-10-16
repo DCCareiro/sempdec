@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cadastro - Mtag</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* Impede seleção de texto */
+    }
+    body {
+      background: #007bff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .login-container {
+      background: #ffffff;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .logo {
+      max-width: 150px;
+      height: auto;
+      margin: 0 auto 30px;
+      animation: pulse 2s infinite ease-in-out;
+      border-radius: 50%;
+      box-shadow: 0 0 0 6px rgba(0, 123, 255, 0.2);
+    }
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px #007bff);
+      }
+      50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 8px #0056b3);
+      }
+    }
+    h2 {
+      color: #007bff;
+      margin-bottom: 30px;
+      font-weight: 600;
+      font-size: 1.8rem;
+    }
+    .form-group {
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: #007bff;
+      font-size: 0.95rem;
+    }
+    .input-container {
+      position: relative;
+    }
+    input {
+      width: 100%;
+      padding: 14px 40px 14px 16px;
+      border: 2px solid #007bff;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    input:focus {
+      border-color: #0056b3;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+      outline: none;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #007bff;
+      font-size: 1.2rem;
+    }
+    button {
+      width: 100%;
+      background: #007bff;
+      color: #ffffff;
+      padding: 14px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      margin-top: 10px;
+    }
+    button:hover:not(:disabled) {
+      background: #0056b3;
+      transform: translateY(-2px);
+    }
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    .mensagem {
+      margin: 15px 0;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background-color: #e6f0ff;
+      color: #004085;
+      border: 1px solid #007bff;
+      display: none;
+      transition: opacity 0.3s ease;
+    }
+    .mensagem.show {
+      display: block;
+      opacity: 1;
+    }
+    .redefinir-link {
+      color: #007bff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: block;
+      margin-top: 15px;
+      text-decoration: underline;
+      transition: color 0.3s ease;
+    }
+    .redefinir-link:hover {
+      color: #0056b3;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .modal-content h3 {
+      color: #007bff;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+    .modal-content .form-group {
+      margin-bottom: 20px;
+    }
+    .close-modal {
+      background: none;
+      border: none;
+      color: #007bff;
+      font-size: 1rem;
+      margin-top: 15px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    .close-modal:hover {
+      color: #0056b3;
+    }
+    @media (max-width: 400px) {
+      .login-container {
+        padding: 30px 20px;
+        max-width: 90%;
+      }
+      .logo {
+        max-width: 120px;
+      }
+      h2 {
+        font-size: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 12px 0;
+      }
+      label {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="assets/favicon.ico" alt="Logo Mtag" class="logo" />
+    <h2>Cadastro</h2>
+    <div id="mensagem" class="mensagem"></div>
+    <form onsubmit="cadastrar(); return false;">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="Digite seu email" required />
+      </div>
+      <div class="form-group">
+        <label for="senha">Senha:</label>
+        <div class="input-container">
+          <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required />
+          <span id="toggle-password" class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+      </div>
+      <button type="submit">Cadastrar</button>
+    </form>
+    <span class="redefinir-link" onclick="abrirModal()">Esqueceu a senha?</span>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3>Redefinir Senha</h3>
+      <div class="form-group">
+        <input type="email" id="email-redefinicao" placeholder="Seu email" />
+      </div>
+      <button onclick="redefinirSenha()">Enviar Email</button>
+      <div id="mensagem-redefinicao" class="mensagem"></div>
+      <button class="close-modal" onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from './js/firebase-config.js';
+    import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    function mostrarMensagem(texto) {
+      const msg = document.getElementById("mensagem");
+      msg.innerText = texto;
+      msg.classList.add("show");
+    }
+
+    window.cadastrar = async function () {
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const botao = document.querySelector("button[type='submit']");
+      const mensagem = document.getElementById("mensagem");
+      mensagem.classList.remove("show");
+
+      if (!email || !senha) {
+        mostrarMensagem("Por favor, preencha todos os campos.");
+        return;
+      }
+
+      const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (!emailValido) {
+        mostrarMensagem("Digite um email válido.");
+        return;
+      }
+
+      botao.disabled = true;
+      botao.innerText = "Cadastrando...";
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, senha);
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Erro ao cadastrar:", error);
+        switch (error.code) {
+          case "auth/email-already-in-use":
+            mostrarMensagem("Este email já está em uso.");
+            break;
+          case "auth/weak-password":
+            mostrarMensagem("A senha deve ter pelo menos 6 caracteres.");
+            break;
+          default:
+            mostrarMensagem("Erro ao cadastrar. Tente novamente.");
+        }
+      } finally {
+        botao.disabled = false;
+        botao.innerText = "Cadastrar";
+      }
+    };
+
+    window.abrirModal = function () {
+      const emailCadastro = document.getElementById("email").value;
+      document.getElementById("email-redefinicao").value = emailCadastro;
+      document.getElementById("modal").classList.add("show");
+    };
+
+    window.fecharModal = function () {
+      document.getElementById("modal").classList.remove("show");
+    };
+
+    window.redefinirSenha = async function () {
+      const email = document.getElementById("email-redefinicao").value;
+      const mensagem = document.getElementById("mensagem-redefinicao");
+      mensagem.classList.remove("show");
+
+      if (!email) {
+        mensagem.innerText = "Digite um email.";
+        mensagem.classList.add("show");
+        return;
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        mensagem.innerText = "Email de redefinição enviado.";
+        mensagem.classList.add("show");
+      } catch (error) {
+        console.error("Erro ao enviar email:", error);
+        switch (error.code) {
+          case "auth/user-not-found":
+            mensagem.innerText = "Email não cadastrado.";
+            break;
+          case "auth/invalid-email":
+            mensagem.innerText = "Email inválido.";
+            break;
+          default:
+            mensagem.innerText = "Erro ao enviar email. Tente novamente.";
+        }
+        mensagem.classList.add("show");
+      }
+    };
+
+    window.togglePassword = function () {
+      const senhaInput = document.getElementById("senha");
+      const toggleIcon = document.getElementById("toggle-password");
+      if (senhaInput.type === "password") {
+        senhaInput.type = "text";
+        toggleIcon.textContent = "🙈";
+      } else {
+        senhaInput.type = "password";
+        toggleIcon.textContent = "👁️";
+      }
+    };
+  </script>
+</body>
+</html>
