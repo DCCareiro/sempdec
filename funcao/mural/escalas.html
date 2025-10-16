@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Plantão e Medição</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f0f2f5 0%, #e3e7eb 100%);
+      color: #2d3748;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 2rem;
+    }
+
+    .nav-btn {
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #718096;
+      color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: #5a6b87;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-btn.active {
+      background-color: #ff892a;
+    }
+
+    .mural {
+      flex: 1;
+      overflow-x: auto;
+      margin-bottom: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: middle;
+      border-bottom: 1px solid #e2e8f0;
+      line-height: 1.2;
+    }
+
+    th {
+      background: #ff892a;
+      color: #ffffff;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    .table-title {
+      background: #ff892a;
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 12px;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .passado {
+      background-color: #edf2f7;
+      color: #718096;
+    }
+
+    .hoje {
+      background-color: #fefcbf;
+      font-weight: 500;
+    }
+
+    .btn-admin {
+      display: block;
+      margin: 1.5rem auto;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #718096;
+      color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .btn-admin:hover {
+      background-color: #5a6b87;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      animation: slideIn 0.3s ease;
+      border: 1px solid #e2e8f0;
+    }
+
+    .modal-content h3 {
+      font-size: 1.5rem;
+      color: #1a202c;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .modal-content button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #3182ce;
+      color: #ffffff;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .modal-content button:hover {
+      background-color: #2b6cb0;
+      transform: translateY(-2px);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    input[type="date"],
+    input[type="month"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 0.95rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin: 10px 0;
+      background: #f7fafc;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .admin-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .month-selector {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.8rem;
+      }
+
+      th, td {
+        padding: 6px 8px;
+        line-height: 1.1;
+      }
+
+      .btn-admin, .nav-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+      }
+
+      .modal-content {
+        padding: 16px;
+        max-width: 90%;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: none;
+        font-size: 9pt;
+        min-height: auto;
+      }
+
+      .nav-buttons,
+      .btn-admin,
+      .modal,
+      .modal-content,
+      .month-selector,
+      .hidden {
+        display: none;
+      }
+
+      .mural {
+        overflow: visible;
+      }
+
+      table {
+        width: 100%;
+        font-size: 9pt;
+        box-shadow: none;
+      }
+
+      th, td {
+        padding: 6px;
+        border: 1px solid #000;
+      }
+
+      th {
+        background: #f1f1f1;
+        color: #000;
+      }
+
+      .table-title {
+        background: #f1f1f1;
+        color: #000;
+        font-size: 10pt;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10mm;
+      }
+
+      .header img {
+        width: 80px;
+        height: auto;
+      }
+
+      .footer {
+        position: fixed;
+        bottom: 5mm;
+        width: calc(100% - 20mm);
+        margin: 0 10mm;
+        font-size: 8pt;
+        color: #333;
+        line-height: 1.2;
+        border-top: 1px solid #000;
+        padding-top: 2mm;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-buttons">
+      <button class="nav-btn active" id="btnPlantao" onclick="mostrarSecao('plantao')">Ver Plantão</button>
+      <button class="nav-btn" id="btnMedicao" onclick="mostrarSecao('medicao')">Ver Medição</button>
+    </div>
+
+    <!-- Seção Plantão -->
+    <section id="plantaoSection">
+      <div class="month-selector">
+        <input type="month" id="mesSelecionadoPlantao" onchange="atualizarTabelaPlantao()">
+      </div>
+      <div class="mural" id="muralPlantao"></div>
+      <button class="btn-admin" onclick="abrirModalAdmin('plantao')">Administrativo - Plantão</button>
+    </section>
+
+    <!-- Seção Medição -->
+    <section id="medicaoSection" class="hidden">
+      <div class="month-selector">
+        <input type="month" id="mesSelecionadoMedicao" onchange="atualizarTabelaMedicao()">
+      </div>
+      <div class="mural" id="muralMedicao"></div>
+      <button class="btn-admin" onclick="abrirModalAdmin('medicao')">Administrativo - Medição</button>
+    </section>
+
+    <!-- Modal Administrativo Plantão -->
+    <div class="modal" id="modalAdminPlantao">
+      <div class="modal-content">
+        <h3>Acesso Administrativo - Plantão</h3>
+        <div id="adminButtonsPlantao" class="admin-buttons">
+          <button class="btn-alterar" onclick="abrirModalEquipes()">Alterar Ordem das Equipes</button>
+          <button class="btn-alterar" onclick="abrirModalDataInicial('plantao')">Alterar Data Inicial</button>
+          <button class="btn-alterar" onclick="salvarTabelaComoImagem('muralPlantao', 'plantao_tabela.png')">Salvar Tabela como Imagem</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Data Inicial Plantão -->
+    <div class="modal" id="modalDataInicialPlantao">
+      <div class="modal-content">
+        <h3>Definir Nova Data Inicial - Plantão</h3>
+        <input type="date" id="novaDataInicialPlantao" />
+        <button onclick="salvarDataInicialPlantao()">Salvar Data</button>
+      </div>
+    </div>
+
+    <!-- Modal de Ordem das Equipes -->
+    <div class="modal" id="modalEquipes">
+      <div class="modal-content">
+        <h3>Editar Ordem das Equipes</h3>
+        <textarea id="textareaEquipes" placeholder="Uma equipe por linha"></textarea>
+        <button onclick="salvarEquipes()">Salvar Ordem</button>
+      </div>
+    </div>
+
+    <!-- Modal Administrativo Medição -->
+    <div class="modal" id="modalAdminMedicao">
+      <div class="modal-content">
+        <h3>Acesso Administrativo - Medição</h3>
+        <div id="adminButtonsMedicao" class="admin-buttons">
+          <button class="btn-alterar" onclick="abrirModalMedicao()">Alterar Ordem</button>
+          <button class="btn-alterar" onclick="abrirModalDataInicial('medicao')">Alterar Data Inicial</button>
+          <button class="btn-alterar" onclick="salvarTabelaComoImagem('muralMedicao', 'medicao_tabela.png')">Salvar Tabela como Imagem</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Ordem de Medição -->
+    <div class="modal" id="modalMedicao">
+      <div class="modal-content">
+        <h3>Ordem de Nomes (um por linha)</h3>
+        <textarea id="ordemNomes" rows="10"></textarea>
+        <label for="repeticoes">Quantidade de repetições por pessoa:</label>
+        <input type="number" id="repeticoes" min="1" value="3">
+        <button class="btn-alterar" onclick="salvarOrdemMedicao()">Salvar Ordem</button>
+      </div>
+    </div>
+
+    <!-- Modal de Data Inicial Medição -->
+    <div class="modal" id="modalDataInicialMedicao">
+      <div class="modal-content">
+        <h3>Alterar Data Inicial - Medição</h3>
+        <input type="date" id="novaDataInicialMedicao">
+        <button class="btn-alterar" onclick="salvarDataInicialMedicao()">Salvar Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- html2canvas para salvar tabela como imagem -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+      authDomain: "mtag-1c04d.firebaseapp.com",
+      projectId: "mtag-1c04d",
+      storageBucket: "mtag-1c04d.firebasestorage.app",
+      messagingSenderId: "487741931549",
+      appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Variáveis Plantão
+    const docRefPlantao = db.collection("Plantao").doc("ordemEquipes");
+    let sequenciaEquipes = [];
+    let dataInicialPlantao = new Date(new Date().getFullYear(), 0, 1);
+
+    // Variáveis Medição
+    let cicloMedicao = ["Bruno", "Talison", "Elison", "Sadrack", "Anderson", "Josue", "Herik"];
+    let dataInicialMedicao = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let repeticoesPorPessoa = 3;
+
+    // Função para salvar tabela como imagem
+    function salvarTabelaComoImagem(elementId, nomeArquivo) {
+      const mural = document.getElementById(elementId);
+      if (!mural) {
+        alert("Tabela não encontrada!");
+        return;
+      }
+
+      html2canvas(mural, {
+        scale: 2,
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = nomeArquivo;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }).catch(err => {
+        console.error("Erro ao salvar tabela como imagem:", err);
+        alert("Ocorreu um erro ao salvar a tabela como imagem.");
+      });
+    }
+
+    // Função para mostrar/esconder seções
+    function mostrarSecao(secao) {
+      const plantaoSection = document.getElementById('plantaoSection');
+      const medicaoSection = document.getElementById('medicaoSection');
+      const btnPlantao = document.getElementById('btnPlantao');
+      const btnMedicao = document.getElementById('btnMedicao');
+
+      if (secao === 'plantao') {
+        plantaoSection.classList.remove('hidden');
+        medicaoSection.classList.add('hidden');
+        btnPlantao.classList.add('active');
+        btnMedicao.classList.remove('active');
+      } else {
+        plantaoSection.classList.add('hidden');
+        medicaoSection.classList.remove('hidden');
+        btnPlantao.classList.remove('active');
+        btnMedicao.classList.add('active');
+      }
+    }
+
+    // Funções Plantão
+    function gerarTabelaPlantao(mes = null, ano = null) {
+      const mural = document.getElementById("muralPlantao");
+      mural.innerHTML = "";
+
+      const hoje = new Date();
+      const mesSelecionado = mes !== null ? mes : hoje.getMonth();
+      const anoSelecionado = ano !== null ? ano : hoje.getFullYear();
+      const diaHoje = hoje.getDate();
+      const diasNoMes = new Date(anoSelecionado, mesSelecionado + 1, 0).getDate();
+
+      const mesesPorExtenso = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      ];
+      const tituloTabela = `Plantão - ${mesesPorExtenso[mesSelecionado]} ${anoSelecionado}`;
+
+      const tabela = document.createElement("table");
+      tabela.innerHTML = `
+        <thead>
+          <tr><th colspan="3" class="table-title">${tituloTabela}</th></tr>
+          <tr><th>Dia</th><th>Semana</th><th>Equipe</th></tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = tabela.querySelector("tbody");
+
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const data = new Date(anoSelecionado, mesSelecionado, dia);
+        const nomeSemana = data.toLocaleDateString("pt-BR", { weekday: "long" });
+        const diffDias = Math.floor((data - dataInicialPlantao) / (1000 * 60 * 60 * 24));
+        const indexEquipe = diffDias >= 0 ? diffDias % sequenciaEquipes.length : 0;
+
+        const linha = tbody.insertRow();
+        if (anoSelecionado === hoje.getFullYear() && mesSelecionado === hoje.getMonth()) {
+          if (dia < diaHoje) linha.classList.add("passado");
+          else if (dia === diaHoje) linha.classList.add("hoje");
+        }
+
+        linha.insertCell().textContent = dia;
+        linha.insertCell().textContent = nomeSemana;
+        linha.insertCell().textContent = sequenciaEquipes[indexEquipe] || "";
+      }
+
+      mural.appendChild(tabela);
+    }
+
+    function atualizarTabelaPlantao() {
+      const input = document.getElementById("mesSelecionadoPlantao").value;
+      if (input) {
+        const [ano, mes] = input.split('-').map(Number);
+        gerarTabelaPlantao(mes - 1, ano);
+      }
+    }
+
+    function abrirModalAdmin(tipo) {
+      document.getElementById(`modalAdmin${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`).style.display = "flex";
+    }
+
+    function abrirModalDataInicial(tipo) {
+      const id = tipo === 'plantao' ? 'novaDataInicialPlantao' : 'novaDataInicialMedicao';
+      const modalId = tipo === 'plantao' ? 'modalDataInicialPlantao' : 'modalDataInicialMedicao';
+      const data = tipo === 'plantao' ? dataInicialPlantao : dataInicialMedicao;
+      document.getElementById(id).value = data.toISOString().split("T")[0];
+      document.getElementById(modalId).style.display = "flex";
+    }
+
+    async function salvarDataInicialPlantao() {
+      const input = document.getElementById("novaDataInicialPlantao").value;
+      if (input) {
+        dataInicialPlantao = new Date(input);
+        await docRefPlantao.set({
+          sequenciaEquipes,
+          dataInicial: input
+        });
+        document.getElementById("modalDataInicialPlantao").style.display = "none";
+        gerarTabelaPlantao();
+      }
+    }
+
+    function abrirModalEquipes() {
+      document.getElementById("modalEquipes").style.display = "flex";
+      document.getElementById("textareaEquipes").value = sequenciaEquipes.join("\n");
+    }
+
+    async function salvarEquipes() {
+      const texto = document.getElementById("textareaEquipes").value.trim();
+      if (!texto) return;
+      const equipes = texto.split("\n").map(e => e.trim()).filter(e => e);
+      sequenciaEquipes = equipes;
+      await docRefPlantao.set({
+        sequenciaEquipes,
+        dataInicial: dataInicialPlantao.toISOString().split("T")[0]
+      });
+      document.getElementById("modalEquipes").style.display = "none";
+      gerarTabelaPlantao();
+    }
+
+    async function carregarEquipesDoFirestore() {
+      const doc = await docRefPlantao.get();
+      if (doc.exists) {
+        const data = doc.data();
+        sequenciaEquipes = data.sequenciaEquipes || [];
+        if (data.dataInicial) {
+          dataInicialPlantao = new Date(data.dataInicial);
+        }
+      } else {
+        sequenciaEquipes = [
+          "Silvano, Anderson", "Silvano, Anderson", "Silvano, Anderson",
+          "Bruno, Josué", "Sadrack, Elison, Talisom", "Silvano, Anderson",
+          "Bruno, Josué", "Sadrack, Elison, Talisom", "Sadrack, Elison, Talisom",
+          "Sadrack, Elison, Talisom", "Silvano, Anderson", "Bruno, Josué",
+          "Sadrack, Elison, Talisom", "Silvano, Anderson", "Bruno, Josué",
+          "Bruno, Josué", "Bruno, Josué", "Sadrack, Elison, Talisom",
+          "Silvano, Anderson", "Bruno, Josué", "Sadrack, Elison, Talisom"
+        ];
+        dataInicialPlantao = new Date(new Date().getFullYear(), 0, 1);
+        await docRefPlantao.set({
+          sequenciaEquipes,
+          dataInicial: dataInicialPlantao.toISOString().split("T")[0]
+        });
+      }
+      const hoje = new Date();
+      document.getElementById("mesSelecionadoPlantao").value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+      gerarTabelaPlantao();
+    }
+
+    // Funções Medição
+    function formatDateInput(date) {
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function getManausDate() {
+      const date = new Date();
+      return new Date(date.toLocaleString("en-US", { timeZone: "America/Manaus" }));
+    }
+
+    function getDaysInMonthManaus(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function gerarTabelaMedicao(mes = null, ano = null) {
+      const mural = document.getElementById("muralMedicao");
+      mural.innerHTML = "";
+
+      const hoje = getManausDate();
+      const mesSelecionado = mes !== null ? mes : hoje.getMonth();
+      const anoSelecionado = ano !== null ? ano : hoje.getFullYear();
+      const diaHoje = hoje.getDate();
+      const diasNoMes = getDaysInMonthManaus(anoSelecionado, mesSelecionado);
+
+      const mesesPorExtenso = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      ];
+      const tituloTabela = `Medição - ${mesesPorExtenso[mesSelecionado]} ${anoSelecionado}`;
+
+      const dataBase = new Date(dataInicialMedicao.getUTCFullYear(), dataInicialMedicao.getUTCMonth(), dataInicialMedicao.getUTCDate());
+
+      const tabela = document.createElement("table");
+      tabela.innerHTML = `
+        <thead>
+          <tr><th colspan="3" class="table-title">${tituloTabela}</th></tr>
+          <tr><th>Dia</th><th>Semana</th><th>Responsável</th></tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = tabela.querySelector("tbody");
+
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const data = new Date(anoSelecionado, mesSelecionado, dia);
+        const diaSemana = data.toLocaleDateString("pt-BR", { weekday: "long", timeZone: "America/Manaus" });
+        const linha = tbody.insertRow();
+
+        if (anoSelecionado === hoje.getFullYear() && mesSelecionado === hoje.getMonth()) {
+          if (dia < diaHoje) linha.classList.add("passado");
+          else if (dia === diaHoje) linha.classList.add("hoje");
+        }
+
+        linha.insertCell().textContent = dia;
+        linha.insertCell().textContent = diaSemana;
+
+        const currentDate = new Date(anoSelecionado, mesSelecionado, dia);
+        let responsavel;
+        if (currentDate < dataBase) {
+          responsavel = "***";
+        } else {
+          const diffFromBase = Math.floor((currentDate - dataBase) / (1000 * 60 * 60 * 24));
+          const blocoIndex = Math.floor(diffFromBase / repeticoesPorPessoa) % cicloMedicao.length;
+          responsavel = cicloMedicao[blocoIndex];
+        }
+
+        linha.insertCell().textContent = responsavel;
+      }
+
+      mural.appendChild(tabela);
+    }
+
+    function atualizarTabelaMedicao() {
+      const input = document.getElementById("mesSelecionadoMedicao").value;
+      if (input) {
+        const [ano, mes] = input.split('-').map(Number);
+        gerarTabelaMedicao(mes - 1, ano);
+      }
+    }
+
+    function abrirModalMedicao() {
+      document.getElementById("modalMedicao").style.display = "flex";
+      document.getElementById("ordemNomes").value = cicloMedicao.join('\n');
+      document.getElementById("repeticoes").value = repeticoesPorPessoa;
+    }
+
+    async function salvarOrdemMedicao() {
+      const texto = document.getElementById("ordemNomes").value;
+      const nomes = texto.split("\n").map(n => n.trim()).filter(n => n);
+      const repeticoes = parseInt(document.getElementById("repeticoes").value);
+      if (nomes.length > 0 && repeticoes > 0) {
+        cicloMedicao = nomes;
+        repeticoesPorPessoa = repeticoes;
+        document.getElementById("modalMedicao").style.display = "none";
+        await salvarNoFirebaseMedicao();
+        gerarTabelaMedicao();
+      } else {
+        alert("Por favor, insira pelo menos um nome e um número válido de repetições.");
+      }
+    }
+
+    async function salvarNoFirebaseMedicao() {
+      const docData = {
+        ordem: cicloMedicao,
+        dataInicial: formatDateInput(dataInicialMedicao),
+        repeticoesPorPessoa
+      };
+      await db.collection("medicao").doc("config").set(docData);
+    }
+
+    async function salvarDataInicialMedicao() {
+      const input = document.getElementById("novaDataInicialMedicao").value;
+      if (input) {
+        dataInicialMedicao = new Date(input);
+        document.getElementById("modalDataInicialMedicao").style.display = "none";
+        await salvarNoFirebaseMedicao();
+        gerarTabelaMedicao();
+      }
+    }
+
+    async function carregarDoFirebaseMedicao() {
+      const doc = await db.collection("medicao").doc("config").get();
+      if (doc.exists) {
+        const data = doc.data();
+        if (Array.isArray(data.ordem)) cicloMedicao = data.ordem;
+        if (data.dataInicial) dataInicialMedicao = new Date(data.dataInicial);
+        if (data.repeticoesPorPessoa) repeticoesPorPessoa = data.repeticoesPorPessoa;
+      }
+      const hoje = getManausDate();
+      document.getElementById("mesSelecionadoMedicao").value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+      gerarTabelaMedicao();
+    }
+
+    // Fechar modais ao clicar fora
+    window.onclick = function(event) {
+      const modais = ["modalAdminPlantao", "modalDataInicialPlantao", "modalEquipes", "modalAdminMedicao", "modalMedicao", "modalDataInicialMedicao"];
+      modais.forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) modal.style.display = "none";
+      });
+    };
+
+    // Carregar dados iniciais
+    carregarEquipesDoFirestore();
+    carregarDoFirebaseMedicao();
+  </script>
+</body>
+</html>
