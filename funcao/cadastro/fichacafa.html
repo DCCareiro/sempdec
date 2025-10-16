@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Famílias Cadastradas</title>
+  <link rel="stylesheet" href="fichacafa.css">
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+  <script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+  <div id="loadingSpinner"></div>
+  <header>
+    <h1>Famílias Cadastradas</h1>
+  </header>
+  <main>
+    <div class="fichas-section">
+      <div class="controls">
+        <span id="contador">Total de fichas: 0</span>
+        <select id="motivoAuxilioSelect" onchange="filtrarPorMotivoEComunidade()">
+          <option value="todos">Todos os Motivos</option>
+          <option value="Enchente">Enchente</option>
+          <option value="Estiagem">Estiagem</option>
+          <option value="Incêndio">Incêndio</option>
+        </select>
+        <select id="comunidadeSelect" onchange="filtrarPorMotivoEComunidade()">
+          <option value="todas">Todas as Comunidades</option>
+        </select>
+        <button onclick="gerarPDF()">Gerar PDF</button>
+        <button onclick="gerarReciboPDF()">Gerar Recibo PDF</button>
+        <button onclick="gerarCronogramaPDF()">Cronograma</button>
+        <button onclick="window.location.href='acaocafa.html'">Cadastro de Familias</button>
+        <button onclick="toggleDuplicados()">Ver Duplicados</button>
+        <button id="atualizarButton" class="atualizar" onclick="atualizarDados()">Atualizar</button>
+      </div>
+
+      <div id="duplicadosContainer">
+        <h3>Lista de Duplicados</h3>
+        <ul id="listaDuplicados"></ul>
+      </div>
+
+      <div class="search-container">
+        <input type="text" id="buscaInput" class="uppercase" placeholder="Buscar ficha (mínimo 4 caracteres)..." oninput="aplicarMascaraBusca(this); if(this.value.length >= 5) buscarFicha();" onkeyup="if(event.key === 'Enter') buscarFicha();" />
+        <button class="search-btn" onclick="buscarFicha()" title="Buscar"><i class="fas fa-search"></i></button>
+        <button class="clear-search" onclick="limparBusca()" title="Limpar"><i class="fas fa-broom"></i></button>
+      </div>
+      
+      <div id="fichasContainer">
+        <table id="fichasTabela">
+          <thead>
+            <tr>
+              <th>Líder de Família</th>
+              <th>CPF do Líder</th>
+              <th>Nome do(a) Cônjuge</th>
+              <th>CPF do(a) Cônjuge</th>
+              <th>Comunidade</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal para Edição -->
+    <div id="editModal" class="modal">      
+      <div class="modal-content">      
+        <h2>Editar Ficha</h2>      
+        <form id="editForm">      
+          <label for="editLiderFamilia">Líder de Família</label>      
+          <input type="text" id="editLiderFamilia" name="liderFamilia" class="uppercase" />  
+
+          <label for="editCpfLider">CPF do Líder</label>      
+          <input type="text" id="editCpfLider" name="cpfLider" inputmode="numeric" maxlength="14" />      
+          <small id="cpfLiderStatus"></small>    
+
+          <label for="editNumeroContato">Telefone de Contato</label>  
+          <input type="text" id="editNumeroContato" name="numeroContato" inputmode="numeric" maxlength="15" />  
+
+          <label for="editDataNascimentoLider">Data de Nascimento do Líder</label>
+          <input type="text" id="editDataNascimentoLider" name="dataNascimentoLider" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" />
+          <small id="idadeLider" style="display:block; margin-top:4px; color:#555;"></small>
+
+          <label for="editTituloEleitorLider">Título de Eleitor do Líder</label>
+          <input type="text" id="editTituloEleitorLider" name="tituloEleitorLider" inputmode="numeric" maxlength="14" />
+
+          <label for="editZonaLider">Zona do Líder</label>
+          <input type="text" id="editZonaLider" name="zonaLider" inputmode="numeric" maxlength="4" />
+
+          <label for="editSecaoLider">Seção do Líder</label>
+          <input type="text" id="editSecaoLider" name="secaoLider" inputmode="numeric" maxlength="3" />
+          <small id="secaoLiderStatus"></small>
+
+          <label for="editNomeEsposa">Nome do(a) Cônjuge</label>
+          <input type="text" id="editNomeEsposa" name="nomeEsposa" class="uppercase" />
+
+          <label for="editCpfEsposa">CPF do(a) Cônjuge</label>
+          <input type="text" id="editCpfEsposa" name="cpfEsposa" inputmode="numeric" maxlength="14" />
+          <small id="cpfEsposaStatus"></small>
+
+          <label for="editTituloEleitorEsposa">Título de Eleitor do(a) Cônjuge</label>
+          <input type="text" id="editTituloEleitorEsposa" name="tituloEleitorEsposa" inputmode="numeric" maxlength="14" />
+
+          <label for="editZonaEsposa">Zona do(a) Cônjuge</label>
+          <input type="text" id="editZonaEsposa" name="zonaEsposa" inputmode="numeric" maxlength="4" />
+
+          <label for="editSecaoEsposa">Seção do(a) Cônjuge</label>
+          <input type="text" id="editSecaoEsposa" name="secaoEsposa" inputmode="numeric" maxlength="3" />
+          <small id="secaoEsposaStatus"></small>
+
+          <label for="editFilhos">Filhos</label>
+          <input type="text" id="editFilhos" name="filhos" inputmode="numeric" maxlength="2" />
+
+          <label for="editLocalidade">Localidade</label>
+          <input type="text" id="editLocalidade" name="localidade" />
+
+          <label for="editMotivoAuxilio">Motivo do Auxílio</label>
+          <textarea id="editMotivoAuxilio" name="motivoAuxilio"></textarea>
+
+          <input type="hidden" id="editId" name="id" />      
+          <button type="submit">Salvar</button>
+          <button type="button" class="cancelar" onclick="fecharModal()">Cancelar</button>
+        </form>
+      </div>      
+    </div>  
+
+    <script>      
+      // Letras maiúsculas      
+      document.querySelectorAll('.uppercase').forEach((input) => {      
+        input.addEventListener('input', () => {      
+          input.value = input.value.toUpperCase();      
+        });      
+      });    
+
+      // Máscaras
+      function maskCPF(value) {  
+        return value.replace(/\D/g, '')  
+          .replace(/(\d{3})(\d)/, '$1.$2')  
+          .replace(/(\d{3})(\d)/, '$1.$2')  
+          .replace(/(\d{3})(\d{1,2})$/, '$1-$2');  
+      }  
+
+      function maskPhone(value) {
+        return value.replace(/\D/g, '')
+          .replace(/^(\d{2})(\d)/g, '($1) $2')
+          .replace(/(\d{5})(\d)/, '$1-$2')
+          .slice(0, 15);
+      }
+
+      function maskDate(value) {
+        return value.replace(/\D/g, '')
+          .replace(/(\d{2})(\d)/, '$1/$2')
+          .replace(/(\d{2})(\d)/, '$1/$2')
+          .slice(0, 10);
+      }
+
+      function maskTitulo(value) {
+        return value.replace(/\D/g, '')
+          .slice(0, 12)
+          .replace(/(\d{4})(\d)/, '$1 $2')
+          .replace(/(\d{4}) (\d{4})(\d)/, '$1 $2 $3');
+      }
+
+      function aplicarMascaraBusca(input) {
+        const value = input.value.replace(/\D/g, '');
+        if (value.length > 0 && !isNaN(value)) {
+          input.value = maskCPF(value);
+        } else {
+          input.value = input.value.toUpperCase();
+        }
+      }
+
+      // Eventos de input com máscaras e validações
+      document.getElementById('editCpfLider').addEventListener('input', (e) => {
+        e.target.value = maskCPF(e.target.value);
+        if (e.target.value.length === 14) {
+          validateCPF(e.target.value, 'cpfLiderStatus');
+        } else {
+          document.getElementById('cpfLiderStatus').textContent = '';
+        }
+      });
+
+      document.getElementById('editCpfEsposa').addEventListener('input', (e) => {
+        e.target.value = maskCPF(e.target.value);
+        if (e.target.value.length === 14) {
+          validateCPF(e.target.value, 'cpfEsposaStatus');
+        } else {
+          document.getElementById('cpfEsposaStatus').textContent = '';
+        }
+      });
+
+      document.getElementById('editNumeroContato').addEventListener('input', (e) => {
+        e.target.value = maskPhone(e.target.value);
+      });
+
+      document.getElementById('editDataNascimentoLider').addEventListener('input', (e) => {
+        e.target.value = maskDate(e.target.value);
+        if (e.target.value.length === 10) {
+          showAge(e.target.value, 'idadeLider');
+        } else {
+          document.getElementById('idadeLider').textContent = '';
+        }
+      });
+
+      document.getElementById('editTituloEleitorLider').addEventListener('input', (e) => {
+        e.target.value = maskTitulo(e.target.value);
+      });
+
+      document.getElementById('editTituloEleitorEsposa').addEventListener('input', (e) => {
+        e.target.value = maskTitulo(e.target.value);
+      });
+
+      document.getElementById('editSecaoLider').addEventListener('input', (e) => {
+        validateSecao(e.target.value, 'secaoLiderStatus');
+      });
+
+      document.getElementById('editSecaoEsposa').addEventListener('input', (e) => {
+        validateSecao(e.target.value, 'secaoEsposaStatus');
+      });
+
+      // Validação de CPF
+      function validateCPF(cpf, statusElementId) {
+        const cleaned = cpf.replace(/\D/g, '');
+        const el = document.getElementById(statusElementId);
+        if (cleaned.length !== 11 || /^(\d)\1+$/.test(cleaned)) {
+          el.textContent = 'CPF inválido';
+          el.style.color = 'red';
+          return false;
+        }
+
+        let sum = 0;
+        for (let i = 0; i < 9; i++) sum += parseInt(cleaned.charAt(i)) * (10 - i);
+        let firstCheck = 11 - (sum % 11);
+        if (firstCheck >= 10) firstCheck = 0;
+        if (firstCheck !== parseInt(cleaned.charAt(9))) {
+          el.textContent = 'CPF inválido';
+          el.style.color = 'red';
+          return false;
+        }
+
+        sum = 0;
+        for (let i = 0; i < 10; i++) sum += parseInt(cleaned.charAt(i)) * (11 - i);
+        let secondCheck = 11 - (sum % 11);
+        if (secondCheck >= 10) secondCheck = 0;
+        if (secondCheck !== parseInt(cleaned.charAt(10))) {
+          el.textContent = 'CPF inválido';
+          el.style.color = 'red';
+          return false;
+        }
+
+        el.textContent = 'CPF válido';
+        el.style.color = 'green';
+        return true;
+      }
+
+      // Cálculo de idade
+      function showAge(data, outputId) {
+        const span = document.getElementById(outputId);
+        const parts = data.split('/');
+        if (parts.length === 3) {
+          const [dia, mes, ano] = parts.map(Number);
+          const nascimento = new Date(ano, mes - 1, dia);
+          const hoje = new Date();
+          let idade = hoje.getFullYear() - nascimento.getFullYear();
+          const m = hoje.getMonth() - nascimento.getMonth();
+          if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) idade--;
+          if (!isNaN(idade) && idade >= 0 && idade <= 130) {
+            span.textContent = `${idade} anos`;
+          } else {
+            span.textContent = '';
+          }
+        } else {
+          span.textContent = '';
+        }
+      }
+
+      // Validação de seção eleitoral
+      const secoesValidas = new Set([
+        '001','002','003','004','005','006','007','008','009','010',
+        '011','012','021','022','023','029','030','031','047','048',
+        '049','050','063','064','065','073','075','078','080','081',
+        '082','083','085','091','094','095','096','097','098','099',
+        '100','101','102','103','104','105','106','107','108','109',
+        '110','111','112','113','115','116','117','118','119','120',
+        '121','122','123','124','125','126','127','128','129','130',
+        '131','132','133','134','135','136','137','138','139','140',
+        '141','142','143','188','189','190','192','193','194','195',
+        '197','199','200','201','202','203','205','208','209','210',
+        '211','212'
+      ]);
+
+      function validateSecao(secao, statusId) {
+        const cleaned = secao.replace(/\D/g, '');
+        const el = document.getElementById(statusId);
+        
+        if (cleaned.length === 3) {
+          if (secoesValidas.has(cleaned)) {
+            el.textContent = 'Seção válida';
+            el.style.color = 'green';
+          } else {
+            el.textContent = 'Seção inválida';
+            el.style.color = 'red';
+          }
+        } else {
+          el.textContent = '';
+        }
+      }
+    </script>
+    
+    <!-- Modal para Visualização -->
+    <div id="viewModal" class="modal" onclick="fecharViewModal(event)">  
+      <div class="modal-content" onclick="event.stopPropagation()">  
+        <h2 class="modal-title">Detalhes da Ficha</h2>  
+        <div id="viewContent">Carregando...</div>  
+        <button type="button" class="close-btn" onclick="fecharViewModal()">Fechar</button>  
+      </div>  
+    </div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+        authDomain: "mtag-1c04d.firebaseapp.com",
+        projectId: "mtag-1c04d",
+        storageBucket: "mtag-1c04d.firebasestorage.app",
+        messagingSenderId: "487741931549",
+        appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      let fichasCache = [];
+      let loading = false;
+      const LOCAL_STORAGE_KEY = 'fichasCache';
+      const LAST_UPDATE_KEY = 'lastUpdateTimestamp';
+      const COOLDOWN_MINUTES = 0;
+      const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000;
+      const LAST_ACTION_KEY = 'lastActionState';
+
+      function salvarEstadoAcao() {
+        const estado = {
+          buscaInput: document.getElementById('buscaInput').value,
+          motivoFiltro: document.getElementById('motivoAuxilioSelect').value,
+          comunidadeFiltro: document.getElementById('comunidadeSelect').value,
+          tabelaVisivel: document.getElementById('fichasContainer').style.display === 'block'
+        };
+        localStorage.setItem(LAST_ACTION_KEY, JSON.stringify(estado));
+      }
+
+      function restaurarEstadoAcao() {
+        const estado = localStorage.getItem(LAST_ACTION_KEY);
+        if (estado) {
+          const { buscaInput, motivoFiltro, comunidadeFiltro, tabelaVisivel } = JSON.parse(estado);
+          document.getElementById('buscaInput').value = buscaInput || '';
+          document.getElementById('motivoAuxilioSelect').value = motivoFiltro || 'todos';
+          document.getElementById('comunidadeSelect').value = comunidadeFiltro || 'todas';
+          if (tabelaVisivel) {
+            document.getElementById('fichasContainer').style.display = 'block';
+            filtrarTabela();
+          }
+        }
+      }
+
+      function atualizarEstadoBotao() {
+        const atualizarButton = document.getElementById('atualizarButton');
+        const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
+        const now = Date.now();
+
+        if (lastUpdate && now - parseInt(lastUpdate) < COOLDOWN_MS) {
+          atualizarButton.classList.add('disabled');
+          atualizarButton.disabled = true;
+        } else {
+          atualizarButton.classList.remove('disabled');
+          atualizarButton.disabled = false;
+        }
+      }
+
+      async function atualizarDados() {
+        const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
+        const now = Date.now();
+
+        if (lastUpdate && now - parseInt(lastUpdate) < COOLDOWN_MS) {
+          alert(`Aguarde até ${new Date(parseInt(lastUpdate) + COOLDOWN_MS).toLocaleString('pt-BR')} para atualizar novamente.`);
+          return;
+        }
+
+        if (loading) return;
+        loading = true;
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        try {
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          const query = db.collection('fichas_acaoexecutada').orderBy('liderFamilia');
+          const snapshot = await query.get();
+          fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(LAST_UPDATE_KEY, now.toString());
+          document.querySelector('#fichasTabela tbody').innerHTML = '';
+          adicionarFichasNaTabela(fichasCache);
+          atualizarContador();
+          verificarDuplicados();
+          popularComunidades();
+          atualizarEstadoBotao();
+          restaurarEstadoAcao();
+          alert("Dados atualizados com sucesso!");
+        } catch (error) {
+          console.error("Erro ao atualizar dados:", error);
+          alert("Erro ao atualizar dados: " + error.message);
+        } finally {
+          loading = false;
+          document.getElementById('loadingSpinner').style.display = 'none';
+        }
+      }
+
+      async function carregarMaisFichas() {
+        if (loading) return;
+        loading = true;
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        try {
+          const cachedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (cachedData) {
+            try {
+              fichasCache = JSON.parse(cachedData);
+              document.querySelector('#fichasTabela tbody').innerHTML = '';
+              adicionarFichasNaTabela(fichasCache);
+              atualizarContador();
+              verificarDuplicados();
+              popularComunidades();
+              atualizarEstadoBotao();
+              restaurarEstadoAcao();
+            } catch (parseError) {
+              console.error("Erro ao parsear dados do localStorage:", parseError);
+              localStorage.removeItem(LOCAL_STORAGE_KEY);
+              await carregarMaisFichas();
+              return;
+            } finally {
+              loading = false;
+              document.getElementById('loadingSpinner').style.display = 'none';
+            }
+            return;
+          }
+
+          const query = db.collection('fichas_acaoexecutada').orderBy('liderFamilia');
+          const snapshot = await query.get();
+          fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(LAST_UPDATE_KEY, Date.now().toString());
+          document.querySelector('#fichasTabela tbody').innerHTML = '';
+          adicionarFichasNaTabela(fichasCache);
+          atualizarContador();
+          verificarDuplicados();
+          popularComunidades();
+          atualizarEstadoBotao();
+          restaurarEstadoAcao();
+        } catch (error) {
+          console.error("Erro ao carregar fichas:", error);
+          alert("Erro ao carregar fichas: " + error.message);
+        } finally {
+          loading = false;
+          document.getElementById('loadingSpinner').style.display = 'none';
+        }
+      }
+
+      function adicionarFichasNaTabela(fichas) {
+        const tbody = document.querySelector('#fichasTabela tbody');
+        tbody.innerHTML = '';
+        fichas.forEach(f => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${f.liderFamilia || '-'}</td>
+            <td>${f.cpfLider || '-'}</td>
+            <td>${f.nomeEsposa || '-'}</td>
+            <td>${f.cpfEsposa || '-'}</td>
+            <td>${f.localidade || '-'}</td>
+            <td>
+              <button class="visualizar" onclick="abrirModalVisualizar('${f.id}')" aria-label="Visualizar">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="editar" onclick="abrirModalEditar('${f.id}')" aria-label="Editar">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="excluir" onclick="excluirFicha('${f.id}')" aria-label="Excluir">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function atualizarContador() {
+        document.getElementById('contador').innerText = `Total de fichas: ${fichasCache.length}`;
+      }
+
+      function formatarDataBR(data) {
+        if (!data) return '';
+        if (data.includes('-')) {
+          const [ano, mes, dia] = data.split('-');
+          return `${dia}/${mes}/${ano}`;
+        }
+        if (data.includes('/')) return data;
+        return data;
+      }
+
+      function verificarDuplicados() {
+        const duplicados = {};
+        fichasCache.forEach(f => {
+          const chaves = [
+            { key: f.liderFamilia?.trim().toLowerCase(), type: 'Nome do Líder' },
+            { key: f.nomeEsposa?.trim().toLowerCase(), type: 'Nome do Cônjuge' },
+            { key: f.cpfLider?.trim(), type: 'CPF do Líder' },
+            { key: f.cpfEsposa?.trim(), type: 'CPF do Cônjuge' }
+          ].filter(item => item.key);
+          chaves.forEach(c => {
+            if (!c.key) return;
+            duplicados[c.key] = duplicados[c.key] || { fichas: [], type: c.type };
+            duplicados[c.key].fichas.push(f);
+            duplicados[c.key].type = c.type;
+          });
+        });
+
+        const duplicadosFiltrados = Object.entries(duplicados).filter(([_, v]) => v.fichas.length > 1);
+        const duplicadosSet = new Set(duplicadosFiltrados.flatMap(([_, v]) => v.fichas.map(f => f.id)));
+        document.querySelectorAll('#fichasTabela tbody tr').forEach((tr, i) => {
+          if (duplicadosSet.has(fichasCache[i]?.id)) {
+            tr.classList.add('highlight-duplicate');
+          }
+        });
+
+        const lista = document.getElementById('listaDuplicados');
+        lista.innerHTML = '';
+        duplicadosFiltrados.forEach(([chave, { fichas, type }], index) => {
+          const li = document.createElement('li');
+          li.textContent = `${index + 1}. ${type}: ${chave}`;
+          lista.appendChild(li);
+        });
+      }
+
+      function toggleDuplicados() {
+        const container = document.getElementById('duplicadosContainer');
+        if (container.style.display === 'none' || !container.style.display) {
+          verificarDuplicados();
+          container.style.display = 'block';
+        } else {
+          container.style.display = 'none';
+        }
+        salvarEstadoAcao();
+      }
+
+      async function excluirFicha(id) {
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return alert("Ficha não encontrada.");
+        
+        const confirmacao = window.confirm(`Tem certeza que deseja excluir a ficha de ${ficha.liderFamilia || 'desconhecido'}?`);
+        if (!confirmacao) return;
+
+        try {
+          await db.collection('fichas_acaoexecutada').doc(id).delete();
+          fichasCache = fichasCache.filter(f => f.id !== id);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          await carregarMaisFichas();
+          alert("Ficha excluída com sucesso!");
+        } catch (error) {
+          console.error("Erro ao excluir ficha:", error);
+          alert("Erro ao excluir ficha: " + error.message);
+        }
+      }
+
+      function filtrarTabela() {
+        const filtro = document.getElementById('buscaInput').value.toLowerCase();
+        const motivoFiltro = document.getElementById('motivoAuxilioSelect').value;
+        const comunidadeFiltro = document.getElementById('comunidadeSelect').value;
+        const fichasContainer = document.getElementById('fichasContainer');
+
+        if (filtro.length < 4 && motivoFiltro === 'todos' && comunidadeFiltro === 'todas') {
+          fichasContainer.style.display = 'none';
+          document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
+            row.style.display = 'none';
+          });
+          return;
+        }
+
+        fichasContainer.style.display = 'block';
+        document.querySelectorAll('#fichasTabela tbody tr').forEach((row, index) => {
+          const ficha = fichasCache[index];
+          const textoRow = row.textContent.toLowerCase();
+          const matchesTexto = filtro.length < 4 || textoRow.includes(filtro);
+          const matchesMotivo = motivoFiltro === 'todos' || (Array.isArray(ficha.motivoAuxilio) ? ficha.motivoAuxilio.includes(motivoFiltro) : ficha.motivoAuxilio === motivoFiltro);
+          const matchesComunidade = comunidadeFiltro === 'todas' || ficha.localidade === comunidadeFiltro;
+          row.style.display = matchesTexto && matchesMotivo && matchesComunidade ? '' : 'none';
+        });
+        salvarEstadoAcao();
+      }
+
+      function filtrarPorMotivoEComunidade() {
+        filtrarTabela();
+      }
+
+      function buscarFicha() {
+        filtrarTabela();
+        // Removido o .blur() para manter o teclado visível
+      }
+
+      function limparBusca() {
+        document.getElementById('buscaInput').value = '';
+        document.getElementById('motivoAuxilioSelect').value = 'todos';
+        document.getElementById('comunidadeSelect').value = 'todas';
+        document.getElementById('fichasContainer').style.display = 'none';
+        document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
+          row.style.display = 'none';
+        });
+        document.getElementById('buscaInput').focus(); // Mantém o foco após limpar
+        salvarEstadoAcao();
+      }
+
+      function abrirModalEditar(id) {
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return alert("Ficha não encontrada.");
+
+        document.getElementById('editId').value = ficha.id;
+        document.getElementById('editLiderFamilia').value = ficha.liderFamilia || '';
+        document.getElementById('editCpfLider').value = ficha.cpfLider || '';
+        document.getElementById('editNumeroContato').value = ficha.numeroContato || '';
+        document.getElementById('editDataNascimentoLider').value = formatarDataBR(ficha.dataNascimentoLider || '');
+        document.getElementById('editTituloEleitorLider').value = ficha.tituloEleitorLider || '';
+        document.getElementById('editZonaLider').value = ficha.zonaLider || '';
+        document.getElementById('editSecaoLider').value = ficha.secaoLider || '';
+        document.getElementById('editNomeEsposa').value = ficha.nomeEsposa || '';
+        document.getElementById('editCpfEsposa').value = ficha.cpfEsposa || '';
+        document.getElementById('editTituloEleitorEsposa').value = ficha.tituloEleitorEsposa || '';
+        document.getElementById('editZonaEsposa').value = ficha.zonaEsposa || '';
+        document.getElementById('editSecaoEsposa').value = ficha.secaoEsposa || '';
+        document.getElementById('editFilhos').value = ficha.filhos || '';
+        document.getElementById('editLocalidade').value = ficha.localidade || '';
+        document.getElementById('editMotivoAuxilio').value = Array.isArray(ficha.motivoAuxilio) ? ficha.motivoAuxilio.join(', ') : ficha.motivoAuxilio || '';
+
+        document.getElementById('editModal').style.display = 'flex';
+      }
+
+      function abrirModalVisualizar(id) {
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return alert("Ficha não encontrada.");
+
+        const viewContent = document.getElementById('viewContent');
+        viewContent.innerHTML = `
+          <p><strong>Líder de Família:</strong> ${ficha.liderFamilia || '-'}</p>
+          <p><strong>CPF do Líder:</strong> ${ficha.cpfLider || '-'}</p>
+          <p><strong>Telefone de Contato:</strong> ${ficha.numeroContato || '-'}</p>
+          <p><strong>Data de Nascimento do Líder:</strong> ${formatarDataBR(ficha.dataNascimentoLider || '')}</p>
+          <p><strong>Título de Eleitor do Líder:</strong> ${ficha.tituloEleitorLider || '-'}</p>
+          <p><strong>Zona do Líder:</strong> ${ficha.zonaLider || '-'}</p>
+          <p><strong>Seção do Líder:</strong> ${ficha.secaoLider || '-'}</p>
+          <p><strong>Nome do(a) Cônjuge:</strong> ${ficha.nomeEsposa || '-'}</p>
+          <p><strong>CPF do(a) Cônjuge:</strong> ${ficha.cpfEsposa || '-'}</p>
+          <p><strong>Título de Eleitor do(a) Cônjuge:</strong> ${ficha.tituloEleitorEsposa || '-'}</p>
+          <p><strong>Zona do(a) Cônjuge:</strong> ${ficha.zonaEsposa || '-'}</p>
+          <p><strong>Seção do(a) Cônjuge:</strong> ${ficha.secaoEsposa || '-'}</p>
+          <p><strong>Filhos:</strong> ${ficha.filhos || '-'}</p>
+          <p><strong>Localidade:</strong> ${ficha.localidade || '-'}</p>
+          <p><strong>Motivo do Auxílio:</strong> ${Array.isArray(ficha.motivoAuxilio) ? ficha.motivoAuxilio.join(', ') : ficha.motivoAuxilio || '-'}</p>
+        `;
+        document.getElementById('viewModal').style.display = 'flex';
+      }
+
+      function fecharModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('editForm').reset();
+      }
+
+      function fecharViewModal() {
+        document.getElementById('viewModal').style.display = 'none';
+      }
+
+      async function salvarEdicao(event) {
+        event.preventDefault();
+        const id = document.getElementById('editId').value;
+        const updatedData = {
+          liderFamilia: document.getElementById('editLiderFamilia').value || null,
+          cpfLider: document.getElementById('editCpfLider').value || null,
+          numeroContato: document.getElementById('editNumeroContato').value || null,
+          dataNascimentoLider: document.getElementById('editDataNascimentoLider').value || null,
+          tituloEleitorLider: document.getElementById('editTituloEleitorLider').value || null,
+          zonaLider: document.getElementById('editZonaLider').value || null,
+          secaoLider: document.getElementById('editSecaoLider').value || null,
+          nomeEsposa: document.getElementById('editNomeEsposa').value || null,
+          cpfEsposa: document.getElementById('editCpfEsposa').value || null,
+          tituloEleitorEsposa: document.getElementById('editTituloEleitorEsposa').value || null,
+          zonaEsposa: document.getElementById('editZonaEsposa').value || null,
+          secaoEsposa: document.getElementById('editSecaoEsposa').value || null,
+          filhos: document.getElementById('editFilhos').value || null,
+          localidade: document.getElementById('editLocalidade').value || null,
+          motivoAuxilio: document.getElementById('editMotivoAuxilio').value.split(',').map(item => item.trim()).filter(Boolean) || null
+        };
+
+        try {
+          document.getElementById('loadingSpinner').style.display = 'block';
+          await db.collection('fichas_acaoexecutada').doc(id).update(updatedData);
+          const index = fichasCache.findIndex(f => f.id === id);
+          if (index !== -1) {
+            fichasCache[index] = { id, ...updatedData };
+          }
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          await carregarMaisFichas();
+          fecharModal();
+          alert("Ficha atualizada com sucesso!");
+        } catch (error) {
+          console.error("Erro ao atualizar ficha:", error);
+          alert("Erro ao atualizar ficha: " + error.message);
+        } finally {
+          document.getElementById('loadingSpinner').style.display = 'none';
+        }
+      }
+      
+      function gerarCronogramaPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "portrait" });
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+
+        const comunidadesMap = fichasCache.reduce((acc, ficha) => {
+          const comunidade = ficha.localidade || 'Sem Comunidade';
+          acc[comunidade] = (acc[comunidade] || 0) + 1;
+          return acc;
+        }, {});
+
+        const comunidadesOrdenadas = Object.entries(comunidadesMap)
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([comunidade, total], index) => [index + 1, comunidade, total]);
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 10;
+        const titulo = `Cronograma de Famílias por Comunidade - ${dataAtual}`;
+        doc.setFontSize(14);
+        doc.text(titulo, pageWidth / 2, 20, { align: "center" });
+
+        doc.autoTable({
+          startY: 30,
+          head: [['#', 'Comunidade', 'Total de Famílias']],
+          body: comunidadesOrdenadas,
+          margin: { top: 30, left: margin, right: margin },
+          styles: {
+            fontSize: 10,
+            cellPadding: 3,
+            overflow: 'linebreak',
+            halign: 'center',
+            valign: 'middle'
+          },
+          columnStyles: {
+            0: { cellWidth: 20 },
+            1: { cellWidth: 100 },
+            2: { cellWidth: 60 }
+          },
+          didDrawPage: function (data) {
+            doc.setFontSize(8);
+            const pageStr = `Página ${data.pageNumber}`;
+            doc.text(pageStr, data.settings.margin.left, doc.internal.pageSize.getHeight() - 5);
+            doc.text(`Emitido em: ${dataAtual}`, doc.internal.pageSize.getWidth() - 40, doc.internal.pageSize.getHeight() - 5);
+          }
+        });
+
+        doc.save(`cronograma_familias_${dataAtual.replace(/\//g, '-')}.pdf`);
+      }
+
+      function popularComunidades() {
+        const select = document.getElementById('comunidadeSelect');
+        const comunidades = [...new Set(fichasCache.map(f => f.localidade).filter(Boolean))];
+        select.innerHTML = `<option value="todas">Todas as Comunidades</option>`;
+        comunidades.sort().forEach(com => {
+          const opt = document.createElement('option');
+          opt.value = com;
+          opt.textContent = com;
+          select.appendChild(opt);
+        });
+      }
+
+      window.onload = function () {
+        carregarMaisFichas();
+        document.getElementById('editForm').addEventListener('submit', salvarEdicao);
+        atualizarEstadoBotao();
+      };
+    </script>
+  </main>
+  <script src="base64.js"></script>
+  <script src="recibo.js"></script>
+  <script src="gerarPDF.js"></script>
+</body>
+</html>
