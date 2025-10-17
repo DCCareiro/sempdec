@@ -43,6 +43,12 @@
         <button onclick="gerarPDF()">Gerar PDF</button>
         <button onclick="gerarReciboPDF()">Gerar Recibo PDF</button>
         <button onclick="gerarCronogramaPDF()">Cronograma</button>
+        
+        <!-- Botões de Exportar/Importar JSON -->
+        <button onclick="exportarJSON()">Exportar JSON</button>
+        <button onclick="document.getElementById('jsonFileInput').click()">Importar JSON</button>
+        <input type="file" id="jsonFileInput" accept=".json" style="display: none" onchange="importarJSON(event)">
+        
         <button onclick="window.location.href='acaocafa.html'">Cadastro de Familias</button>
         <button onclick="toggleDuplicados()">Ver Duplicados</button>
         <button id="atualizarButton" class="atualizar" onclick="atualizarDados()">Atualizar</button>
@@ -332,12 +338,12 @@
 
     <script>
       const firebaseConfig = {
-        apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
-        authDomain: "mtag-1c04d.firebaseapp.com",
-        projectId: "mtag-1c04d",
-        storageBucket: "mtag-1c04d.firebasestorage.app",
-        messagingSenderId: "487741931549",
-        appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+        apiKey: "AIzaSyA1L565-G0qLv7egXWrzl4EKTXPOQJg2c8",
+        authDomain: "sempdec.firebaseapp.com",
+        projectId: "sempdec",
+        storageBucket: "sempdec.firebasestorage.app",
+        messagingSenderId: "113645898789",
+        appId: "1:113645898789:web:7ae810650c8a9b19d703cc"
       };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
@@ -349,6 +355,106 @@
       const COOLDOWN_MINUTES = 0;
       const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000;
       const LAST_ACTION_KEY = 'lastActionState';
+
+      // Funções de Exportar/Importar JSON
+      function exportarJSON() {
+        if (!fichasCache.length) {
+          alert('Não há dados para exportar.');
+          return;
+        }
+
+        const dataStr = JSON.stringify(fichasCache, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `familias_cadastradas_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        alert(`Exportação concluída! ${fichasCache.length} registros exportados.`);
+      }
+
+      async function importarJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const confirmacao = window.confirm(
+          'ATENÇÃO: Importar dados substituirá os dados atuais. ' +
+          'Deseja continuar?'
+        );
+        
+        if (!confirmacao) {
+          event.target.value = '';
+          return;
+        }
+
+        try {
+          document.getElementById('loadingSpinner').style.display = 'block';
+          const fileContent = await readFileAsText(file);
+          const dadosImportados = JSON.parse(fileContent);
+          
+          if (!Array.isArray(dadosImportados)) {
+            throw new Error('Formato de arquivo inválido. Deve ser um array JSON.');
+          }
+
+          // Validar estrutura básica dos dados
+          const primeiraFicha = dadosImportados[0];
+          if (!primeiraFicha || typeof primeiraFicha !== 'object') {
+            throw new Error('Estrutura de dados inválida.');
+          }
+
+          // Limpar a coleção atual antes de importar
+          const batch = db.batch();
+          const snapshot = await db.collection('fichas_acaoexecutada').get();
+          snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+
+          // Adicionar novos dados
+          const importBatch = db.batch();
+          dadosImportados.forEach((ficha, index) => {
+            // Remover o ID do documento para evitar conflitos
+            const { id, ...dadosFicha } = ficha;
+            const docRef = db.collection('fichas_acaoexecutada').doc();
+            importBatch.set(docRef, dadosFicha);
+          });
+
+          await importBatch.commit();
+          
+          // Atualizar cache local
+          fichasCache = dadosImportados.map((ficha, index) => {
+            const { id, ...dados } = ficha;
+            return { id: `imported_${index}`, ...dados };
+          });
+          
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(LAST_UPDATE_KEY, Date.now().toString());
+          
+          await carregarMaisFichas();
+          alert(`Importação concluída! ${dadosImportados.length} registros importados com sucesso.`);
+          
+        } catch (error) {
+          console.error('Erro na importação:', error);
+          alert('Erro na importação: ' + error.message);
+        } finally {
+          document.getElementById('loadingSpinner').style.display = 'none';
+          event.target.value = '';
+        }
+      }
+
+      function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = e => resolve(e.target.result);
+          reader.onerror = e => reject(new Error('Erro ao ler arquivo'));
+          reader.readAsText(file);
+        });
+      }
 
       function salvarEstadoAcao() {
         const estado = {
