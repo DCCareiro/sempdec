@@ -252,18 +252,16 @@
         <div id="idadeFeedback" class="idade-feedback"></div>
       </div>
       <div class="col-md-6">
-        <label for="tituloEleitorLider" class="form-label">Título de Eleitor do Líder *</label>
-        <input type="text" class="form-control" id="tituloEleitorLider" placeholder="0000 0000 0000" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraTitulo(this)" required />
+        <label for="tituloEleitorLider" class="form-label">Título de Eleitor do Líder</label>
+        <input type="text" class="form-control" id="tituloEleitorLider" placeholder="0000 0000 0000" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraTitulo(this)" />
       </div>
       <div class="col-md-6">
-        <label for="zonaLider" class="form-label">Zona do Líder *</label>
-        <input type="text" class="form-control" id="zonaLider" placeholder="0023" maxlength="4" inputmode="numeric" pattern="\d*" oninput="validarZona(this)" required />
-        <div id="zonaLiderFeedback" class="zona-feedback"></div>
+        <label for="zonaLider" class="form-label">Zona do Líder</label>
+        <input type="text" class="form-control" id="zonaLider" placeholder="Ex: 0023" maxlength="4" inputmode="numeric" pattern="\d*" />
       </div>
       <div class="col-md-6">
-        <label for="secaoLider" class="form-label">Seção do Líder *</label>
-        <input type="text" class="form-control" id="secaoLider" placeholder="Seção" maxlength="3" inputmode="numeric" pattern="\d*" oninput="validarSecao(this)" required />
-        <div id="secaoLiderFeedback" class="secao-feedback"></div>
+        <label for="secaoLider" class="form-label">Seção do Líder</label>
+        <input type="text" class="form-control" id="secaoLider" placeholder="Seção" maxlength="3" inputmode="numeric" pattern="\d*" />
       </div>
       <div class="col-md-6">
         <label for="nomeEsposa" class="form-label">Nome do(a) Cônjuge</label>
@@ -280,13 +278,11 @@
       </div>
       <div class="col-md-6">
         <label for="zonaEsposa" class="form-label">Zona do(a) Cônjuge</label>
-        <input type="text" class="form-control" id="zonaEsposa" placeholder="0023" maxlength="4" inputmode="numeric" pattern="\d*" oninput="validarZona(this)" />
-        <div id="zonaEsposaFeedback" class="zona-feedback"></div>
+        <input type="text" class="form-control" id="zonaEsposa" placeholder="Ex: 0023" maxlength="4" inputmode="numeric" pattern="\d*" />
       </div>
       <div class="col-md-6">
         <label for="secaoEsposa" class="form-label">Seção do(a) Cônjuge</label>
-        <input type="text" class="form-control" id="secaoEsposa" placeholder="Seção" maxlength="3" inputmode="numeric" pattern="\d*" oninput="validarSecao(this)" />
-        <div id="secaoEsposaFeedback" class="secao-feedback"></div>
+        <input type="text" class="form-control" id="secaoEsposa" placeholder="Seção" maxlength="3" inputmode="numeric" pattern="\d*" />
       </div>
       <div class="col-md-6">
         <label for="filhos" class="form-label">Filhos</label>
@@ -351,20 +347,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const secoesValidas = [
-      '001', '002', '003', '004', '005', '006', '007', '008', '009', '010',
-      '011', '012', '021', '022', '023', '029', '030', '031', '047', '048',
-      '049', '050', '063', '064', '065', '073', '075', '078', '080', '081',
-      '082', '083', '085', '091', '094', '095', '096', '097', '098', '099',
-      '100', '101', '102', '103', '104', '105', '106', '107', '108', '109',
-      '110', '111', '112', '113', '115', '116', '117', '118', '119', '120',
-      '121', '122', '123', '124', '125', '126', '127', '128', '129', '130',
-      '131', '132', '133', '134', '135', '136', '137', '138', '139', '140',
-      '141', '142', '143', '188', '189', '190', '192', '193', '194', '195',
-      '197', '199', '200', '201', '202', '203', '205', '208', '209', '210',
-      '211', '212'
-    ];
-
+    // Removida a lista de seções válidas pré-definidas
     let comunidadesOriginal = [];
 
     function ajustarTamanhoSelect() {
@@ -582,42 +565,6 @@
       }
     }
 
-    function validarSecao(input) {
-      let v = input.value.replace(/\D/g, "").slice(0, 3);
-      input.value = v;
-      const feedbackElement = document.getElementById(input.id + 'Feedback');
-      if (v.length === 3) {
-        if (secoesValidas.includes(v)) {
-          feedbackElement.textContent = 'Seção válida';
-          feedbackElement.className = 'secao-feedback secao-valido';
-        } else {
-          feedbackElement.textContent = 'Seção inválida';
-          feedbackElement.className = 'secao-feedback secao-invalido';
-        }
-      } else {
-        feedbackElement.textContent = '';
-        feedbackElement.className = 'secao-feedback';
-      }
-    }
-
-    function validarZona(input) {
-      let v = input.value.replace(/\D/g, "").slice(0, 4);
-      input.value = v;
-      const feedbackElement = document.getElementById(input.id + 'Feedback');
-      if (v.length === 4) {
-        if (v === '0023') {
-          feedbackElement.textContent = 'Zona válida';
-          feedbackElement.className = 'zona-feedback zona-valido';
-        } else {
-          feedbackElement.textContent = 'Zona inválida (deve ser 0023)';
-          feedbackElement.className = 'zona-feedback zona-invalido';
-        }
-      } else {
-        feedbackElement.textContent = '';
-        feedbackElement.className = 'zona-feedback';
-      }
-    }
-
     function forcarMaiusculas(input) {
       input.value = input.value.toUpperCase();
     }
@@ -662,8 +609,8 @@
         const localidade = document.getElementById('localidadeSelect').value;
         const motivoAuxilio = Array.from(document.getElementById('motivoAuxilio').selectedOptions).map(option => option.value);
 
-        if (!liderFamilia || !cpfLider || !tituloEleitorLider || !zonaLider || !secaoLider || !localidade || !motivoAuxilio.length) {
-          alert('Preencha todos os campos obrigatórios: Líder de Família, CPF do Líder, Título de Eleitor do Líder, Zona do Líder, Seção do Líder, Comunidade e Motivo do Auxílio.');
+        if (!liderFamilia || !cpfLider || !localidade || !motivoAuxilio.length) {
+          alert('Preencha todos os campos obrigatórios: Líder de Família, CPF do Líder, Comunidade e Motivo do Auxílio.');
           return;
         }
 
@@ -683,25 +630,7 @@
           return;
         }
 
-        if (zonaLider !== '0023') {
-          alert('Zona do líder inválida (deve ser 0023).');
-          return;
-        }
-
-        if (secaoLider && !secoesValidas.includes(secaoLider)) {
-          alert('Seção do líder inválida.');
-          return;
-        }
-
-        if (zonaEsposa && zonaEsposa !== '0023') {
-          alert('Zona do(a) cônjuge inválida (deve ser 0023).');
-          return;
-        }
-
-        if (secaoEsposa && !secoesValidas.includes(secaoEsposa)) {
-          alert('Seção do(a) cônjuge inválida.');
-          return;
-        }
+        // Removida a validação de zona e seção pré-definidas
 
         await db.collection('fichas_acaoexecutada').add({
           liderFamilia,
@@ -733,10 +662,6 @@
         ], 'value', 'label', false);
         document.getElementById("cpfLiderFeedback").textContent = '';
         document.getElementById("cpfEsposaFeedback").textContent = '';
-        document.getElementById("secaoLiderFeedback").textContent = '';
-        document.getElementById("secaoEsposaFeedback").textContent = '';
-        document.getElementById("zonaLiderFeedback").textContent = '';
-        document.getElementById("zonaEsposaFeedback").textContent = '';
         document.getElementById("idadeFeedback").textContent = '';
         ajustarTamanhoSelect();
       } catch (error) {
