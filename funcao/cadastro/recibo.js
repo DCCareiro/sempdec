@@ -197,15 +197,15 @@ function gerarReciboPDF() {
     doc.setTextColor(100);
 
     const materiais = [
-      '( ) CESTAS BÁSICAS',
-      '( ) KIT HIGIENE PESSOAL',
-      '( ) KIT LIMPEZA',
-      '( ) KIT DORMITÓRIO',
-      '( ) COLCHÃO',
-      '( ) REDE DE DESCANSO',
-      '( ) KIT MULHER',
-      '( ) KIT BEBÊ',
-      '( ) ÁGUA MINERAL'
+      '(   ) CESTAS BÁSICAS',
+      '(   ) KIT HIGIENE PESSOAL',
+      '(   ) KIT LIMPEZA',
+      '(   ) KIT DORMITÓRIO',
+      '(   ) COLCHÃO',
+      '(   ) REDE DE DESCANSO',
+      '(   ) KIT MULHER',
+      '(   ) KIT BEBÊ',
+      '(   ) ÁGUA MINERAL'
     ];
 
     const textoMateriais = materiais.join(', ');
@@ -271,9 +271,9 @@ function gerarReciboPDF() {
 
     // MOTIVO DO AUXÍLIO - MODELO ATUAL COM MARCAÇÃO MANUAL
     const motivoAuxilioTexto =
-      'MOTIVO DO AUXÍLIO: ( ) INUNDAÇÃO, ( ) CHUVAS INTENSAS, ' +
-      '( ) ALAGAMENTO, ( ) VENDAVAL, ( ) INCÊNDIO FLORESTAL, ' +
-      '( ) ESTIAGEM.';
+      'MOTIVO DO AUXÍLIO: (   ) INUNDAÇÃO, (   ) CHUVAS INTENSAS, ' +
+      '(   ) ALAGAMENTO, (   ) VENDAVAL, (   ) INCÊNDIO FLORESTAL, ' +
+      '(   ) ESTIAGEM.';
 
     const linhasMotivo = doc.splitTextToSize(
       motivoAuxilioTexto,
