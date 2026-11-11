@@ -8,18 +8,6 @@ function gerarReciboPDF() {
     format: 'a4'
   });
 
-  // DATA ATUAL POR EXTENSO
-  function dataPorExtenso(date) {
-    const meses = [
-      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
-    ];
-
-    return `${date.getDate()} de ${meses[date.getMonth()]} de ${date.getFullYear()}`;
-  }
-
-  const dataAtual = dataPorExtenso(new Date()).toUpperCase();
-
   const pageHeight = doc.internal.pageSize.getHeight();
   const halfPageHeight = pageHeight / 2;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -88,10 +76,6 @@ function gerarReciboPDF() {
     const cpfConjuge = (familia.cpfEsposa || '____________________').toUpperCase();
     const contato = (familia.numeroContato || '____________________').toUpperCase();
 
-    const motivoAuxilio = Array.isArray(familia.motivoAuxilio)
-      ? familia.motivoAuxilio.map(m => m.toUpperCase()).join(', ')
-      : (familia.motivoAuxilio || '____________________').toUpperCase();
-
     // LOGOTIPOS
     doc.addImage(
       logoEsquerda,
@@ -130,15 +114,12 @@ function gerarReciboPDF() {
       'EU, ' + lider +
       ', INSCRITO(A) NO CPF SOB O N°: ' + cpfLider +
       ', RESIDENTE NA LOCALIDADE DE ' + localidade +
-      ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ' +
-      dataAtual +
-      ', A QUANTIDADE DE:';
+      ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ____/____/______, A QUANTIDADE DE:';
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100);
 
-    // DESTACA OS DADOS AUTOMÁTICOS EM NEGRITO
     const partesDeclaracao = [
       { text: 'EU, ', bold: false },
       { text: lider, bold: true },
@@ -147,7 +128,7 @@ function gerarReciboPDF() {
       { text: ', RESIDENTE NA LOCALIDADE DE ', bold: false },
       { text: localidade, bold: true },
       {
-        text: ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ' + dataAtual + ', A QUANTIDADE DE:',
+        text: ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ____/____/______, A QUANTIDADE DE:',
         bold: false
       }
     ];
@@ -288,11 +269,14 @@ function gerarReciboPDF() {
 
     yOffset += linhasContato.length * 5;
 
-    // MOTIVO DO AUXÍLIO AUTOMÁTICO
-    const informacaoMotivo = 'MOTIVO DO AUXÍLIO: ' + motivoAuxilio;
+    // MOTIVO DO AUXÍLIO - MODELO ATUAL COM MARCAÇÃO MANUAL
+    const motivoAuxilioTexto =
+      'MOTIVO DO AUXÍLIO: ( ) INUNDAÇÃO, ( ) CHUVAS INTENSAS, ' +
+      '( ) ALAGAMENTO, ( ) VENDAVAL, ( ) INCÊNDIO FLORESTAL, ' +
+      '( ) ESTIAGEM.';
 
     const linhasMotivo = doc.splitTextToSize(
-      informacaoMotivo,
+      motivoAuxilioTexto,
       maxWidth
     );
 
@@ -327,7 +311,7 @@ function gerarReciboPDF() {
 
     yOffset += splitConfirmation.length * 5 + 10;
 
-    // ASSINATURAS - FORMATAÇÃO ATUAL
+    // ASSINATURAS
     const lineWidth = 80;
 
     const startX1 = margin;
