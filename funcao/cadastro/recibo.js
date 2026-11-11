@@ -128,7 +128,7 @@ function gerarReciboPDF() {
       { text: ', RESIDENTE NA LOCALIDADE DE ', bold: false },
       { text: localidade, bold: true },
       {
-        text: ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ____/____/______, A QUANTIDADE DE:',
+        text: ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ______/______/_________, A QUANTIDADE DE:',
         bold: false
       }
     ];
@@ -197,15 +197,15 @@ function gerarReciboPDF() {
     doc.setTextColor(100);
 
     const materiais = [
-      '(    ) CESTAS BÁSICAS',
-      '(    ) KIT HIGIENE PESSOAL',
-      '(    ) KIT LIMPEZA',
-      '(    ) KIT DORMITÓRIO',
-      '(    ) COLCHÃO',
-      '(    ) REDE DE DESCANSO',
-      '(    ) KIT MULHER',
-      '(    ) KIT BEBÊ',
-      '(    ) ÁGUA MINERAL'
+      '(      ) CESTAS BÁSICAS',
+      '(      ) KIT HIGIENE PESSOAL',
+      '(      ) KIT LIMPEZA',
+      '(      ) KIT DORMITÓRIO',
+      '(      ) COLCHÃO',
+      '(      ) REDE DE DESCANSO',
+      '(      ) KIT MULHER',
+      '(      ) KIT BEBÊ',
+      '(      ) ÁGUA MINERAL'
     ];
 
     const textoMateriais = materiais.join(', ');
@@ -271,9 +271,9 @@ function gerarReciboPDF() {
 
     // MOTIVO DO AUXÍLIO - MODELO ATUAL COM MARCAÇÃO MANUAL
     const motivoAuxilioTexto =
-      'MOTIVO DO AUXÍLIO: (    ) INUNDAÇÃO, (    ) CHUVAS INTENSAS, ' +
-      '(    ) ALAGAMENTO, (    ) VENDAVAL, (    ) INCÊNDIO FLORESTAL, ' +
-      '(    ) ESTIAGEM.';
+      'MOTIVO DO AUXÍLIO: (      ) INUNDAÇÃO, (      ) CHUVAS INTENSAS, ' +
+      '(      ) ALAGAMENTO, (      ) VENDAVAL, (      ) INCÊNDIO FLORESTAL, ' +
+      '(      ) ESTIAGEM.';
 
     const linhasMotivo = doc.splitTextToSize(
       motivoAuxilioTexto,
