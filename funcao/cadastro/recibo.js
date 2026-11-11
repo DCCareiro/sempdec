@@ -8,6 +8,18 @@ function gerarReciboPDF() {
     format: 'a4'
   });
 
+  // DATA ATUAL POR EXTENSO
+  function dataPorExtenso(date) {
+    const meses = [
+      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    ];
+
+    return `${date.getDate()} de ${meses[date.getMonth()]} de ${date.getFullYear()}`;
+  }
+
+  const dataAtual = dataPorExtenso(new Date()).toUpperCase();
+
   const pageHeight = doc.internal.pageSize.getHeight();
   const halfPageHeight = pageHeight / 2;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -67,6 +79,19 @@ function gerarReciboPDF() {
       currentHalf = 0;
     }
 
+    // DADOS AUTOMÁTICOS DA FAMÍLIA
+    const lider = (familia.liderFamilia || '____________________').toUpperCase();
+    const cpfLider = (familia.cpfLider || '____________________').toUpperCase();
+    const localidade = (familia.localidade || '____________________').toUpperCase();
+
+    const conjuge = (familia.nomeEsposa || '____________________').toUpperCase();
+    const cpfConjuge = (familia.cpfEsposa || '____________________').toUpperCase();
+    const contato = (familia.numeroContato || '____________________').toUpperCase();
+
+    const motivoAuxilio = Array.isArray(familia.motivoAuxilio)
+      ? familia.motivoAuxilio.map(m => m.toUpperCase()).join(', ')
+      : (familia.motivoAuxilio || '____________________').toUpperCase();
+
     // LOGOTIPOS
     doc.addImage(
       logoEsquerda,
@@ -100,33 +125,90 @@ function gerarReciboPDF() {
 
     yOffset += imageHeight + 8;
 
-    // CORPO DA DECLARAÇÃO
+    // CORPO DA DECLARAÇÃO COM PREENCHIMENTO AUTOMÁTICO
     const declaracao =
-      'EU, ____________________________________________, ' +
-      'INSCRITO(A) NO CPF SOB O N°: ____________________, ' +
-      'RESIDENTE NA LOCALIDADE DE ________________________________ ' +
-      '____________________________________, DECLARO, PARA OS DEVIDOS ' +
-      'FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA ' +
-      'CIVIL (SEMPDEC), NA DATA DE ____/____/______, A QUANTIDADE DE:';
+      'EU, ' + lider +
+      ', INSCRITO(A) NO CPF SOB O N°: ' + cpfLider +
+      ', RESIDENTE NA LOCALIDADE DE ' + localidade +
+      ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ' +
+      dataAtual +
+      ', A QUANTIDADE DE:';
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100);
 
-    const linhasDeclaracao = doc.splitTextToSize(
-      declaracao,
-      maxWidth
-    );
+    // DESTACA OS DADOS AUTOMÁTICOS EM NEGRITO
+    const partesDeclaracao = [
+      { text: 'EU, ', bold: false },
+      { text: lider, bold: true },
+      { text: ', INSCRITO(A) NO CPF SOB O N°: ', bold: false },
+      { text: cpfLider, bold: true },
+      { text: ', RESIDENTE NA LOCALIDADE DE ', bold: false },
+      { text: localidade, bold: true },
+      {
+        text: ', DECLARO, PARA OS DEVIDOS FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL (SEMPDEC), NA DATA DE ' + dataAtual + ', A QUANTIDADE DE:',
+        bold: false
+      }
+    ];
 
-    // ESPAÇAMENTO MAIOR ENTRE AS LINHAS
-    doc.text(
-      linhasDeclaracao,
-      margin,
-      yOffset,
-      { lineHeightFactor: 1.8 }
-    );
+    let linhaAtual = '';
+    let linhaBold = [];
+    let posY = yOffset;
+    const lineHeight = 7;
 
-    yOffset += linhasDeclaracao.length * 7 + 5;
+    function imprimirDeclaracao() {
+      let x = margin;
+
+      linhaBold.forEach(parte => {
+        doc.setFont(
+          'helvetica',
+          parte.bold ? 'bolditalic' : 'italic'
+        );
+
+        doc.text(parte.text, x, posY);
+        x += doc.getTextWidth(parte.text);
+      });
+
+      posY += lineHeight;
+      linhaBold = [];
+      linhaAtual = '';
+    }
+
+    partesDeclaracao.forEach(parte => {
+      const palavras = parte.text.split(/(\s+)/);
+
+      palavras.forEach(palavra => {
+        if (!palavra) return;
+
+        doc.setFont(
+          'helvetica',
+          parte.bold ? 'bolditalic' : 'italic'
+        );
+
+        const larguraPalavra = doc.getTextWidth(palavra);
+
+        if (
+          doc.getTextWidth(linhaAtual) + larguraPalavra > maxWidth &&
+          linhaAtual.length > 0
+        ) {
+          imprimirDeclaracao();
+        }
+
+        linhaBold.push({
+          text: palavra,
+          bold: parte.bold
+        });
+
+        linhaAtual += palavra;
+      });
+    });
+
+    if (linhaBold.length > 0) {
+      imprimirDeclaracao();
+    }
+
+    yOffset = posY + 5;
 
     // MATERIAIS RECEBIDOS - LADO A LADO
     doc.setFont("helvetica", "bold");
@@ -173,23 +255,44 @@ function gerarReciboPDF() {
 
     yOffset += 5;
 
-    // CONTATO
+    // CÔNJUGE E CPF AUTOMÁTICOS
+    const informacaoConjuge =
+      'CÔNJUGE: ' + conjuge + ' — CPF: ' + cpfConjuge;
+
+    const linhasConjuge = doc.splitTextToSize(
+      informacaoConjuge,
+      maxWidth
+    );
+
     doc.text(
-      'CONTATO: ______________________________________________',
+      linhasConjuge,
       margin,
       yOffset
     );
 
-    yOffset += 5;
+    yOffset += linhasConjuge.length * 5;
 
-    // MOTIVOS DO AUXÍLIO COM CAMPOS DE MARCAÇÃO
-    const motivoAuxilioTexto =
-      'MOTIVO DO AUXÍLIO: ( ) INUNDAÇÃO, ( ) CHUVAS INTENSAS, ' +
-      '( ) ALAGAMENTO, ( ) VENDAVAL, ( ) INCÊNDIO FLORESTAL, ' +
-      '( ) ESTIAGEM.';
+    // CONTATO AUTOMÁTICO
+    const informacaoContato = 'CONTATO: ' + contato;
+
+    const linhasContato = doc.splitTextToSize(
+      informacaoContato,
+      maxWidth
+    );
+
+    doc.text(
+      linhasContato,
+      margin,
+      yOffset
+    );
+
+    yOffset += linhasContato.length * 5;
+
+    // MOTIVO DO AUXÍLIO AUTOMÁTICO
+    const informacaoMotivo = 'MOTIVO DO AUXÍLIO: ' + motivoAuxilio;
 
     const linhasMotivo = doc.splitTextToSize(
-      motivoAuxilioTexto,
+      informacaoMotivo,
       maxWidth
     );
 
@@ -224,7 +327,7 @@ function gerarReciboPDF() {
 
     yOffset += splitConfirmation.length * 5 + 10;
 
-    // ASSINATURAS
+    // ASSINATURAS - FORMATAÇÃO ATUAL
     const lineWidth = 80;
 
     const startX1 = margin;
