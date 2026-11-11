@@ -1,6 +1,7 @@
 
 function gerarReciboPDF() {
   const { jsPDF } = window.jspdf;
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -49,6 +50,7 @@ function gerarReciboPDF() {
     if (currentHalf === 0 && index !== 0) {
       doc.setDrawColor(150);
       doc.setLineWidth(0.3);
+
       doc.line(
         margin,
         halfPageHeight,
@@ -105,7 +107,7 @@ function gerarReciboPDF() {
       'RESIDENTE NA LOCALIDADE DE ________________________________ ' +
       '____________________________________, DECLARO, PARA OS DEVIDOS ' +
       'FINS, QUE RECEBI DA SECRETARIA MUNICIPAL DE PROTEÇÃO E DEFESA ' +
-      'CIVIL (SEMPDEC), NA DATA DE ____/____/2026, A QUANTIDADE DE:';
+      'CIVIL (SEMPDEC), NA DATA DE ____/____/______, A QUANTIDADE DE:';
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "italic");
@@ -116,7 +118,11 @@ function gerarReciboPDF() {
       maxWidth
     );
 
-    doc.text(linhasDeclaracao, margin, yOffset);
+    doc.text(
+      linhasDeclaracao,
+      margin,
+      yOffset
+    );
 
     yOffset += linhasDeclaracao.length * 5 + 3;
 
@@ -165,6 +171,7 @@ function gerarReciboPDF() {
 
     yOffset += 5;
 
+    // CONTATO
     doc.text(
       'CONTATO: ______________________________________________',
       margin,
@@ -173,13 +180,23 @@ function gerarReciboPDF() {
 
     yOffset += 5;
 
+    // MOTIVOS DO AUXÍLIO
+    const motivoAuxilioTexto =
+      'MOTIVO DO AUXÍLIO: INUNDAÇÃO, CHUVAS INTENSAS, ALAGAMENTO, ' +
+      'VENDAVAL, INCÊNDIO FLORESTAL E ESTIAGEM.';
+
+    const linhasMotivo = doc.splitTextToSize(
+      motivoAuxilioTexto,
+      maxWidth
+    );
+
     doc.text(
-      'MOTIVO DO AUXÍLIO: INUNDAÇÃO',
+      linhasMotivo,
       margin,
       yOffset
     );
 
-    yOffset += 7;
+    yOffset += linhasMotivo.length * 5 + 7;
 
     // DECLARAÇÃO DE RECEBIMENTO
     const confirmationText =
