@@ -180,10 +180,11 @@ function gerarReciboPDF() {
 
     yOffset += 5;
 
-    // MOTIVOS DO AUXÍLIO
+    // MOTIVOS DO AUXÍLIO COM CAMPOS DE MARCAÇÃO
     const motivoAuxilioTexto =
-      'MOTIVO DO AUXÍLIO: INUNDAÇÃO, CHUVAS INTENSAS, ALAGAMENTO, ' +
-      'VENDAVAL, INCÊNDIO FLORESTAL E ESTIAGEM.';
+      'MOTIVO DO AUXÍLIO: ( ) INUNDAÇÃO, ( ) CHUVAS INTENSAS, ' +
+      '( ) ALAGAMENTO, ( ) VENDAVAL, ( ) INCÊNDIO FLORESTAL, ' +
+      '( ) ESTIAGEM.';
 
     const linhasMotivo = doc.splitTextToSize(
       motivoAuxilioTexto,
